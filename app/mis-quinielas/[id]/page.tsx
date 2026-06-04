@@ -178,30 +178,34 @@ export default function QuinielaPage() {
   }
 
   return (
-    <main className="min-h-screen bg-gray-950 text-white">
+    <main className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-gray-900 border-b border-gray-800 px-6 py-4 flex justify-between items-center sticky top-0 z-10">
-        <div className="flex items-center gap-4">
-          <Link href="/mis-quinielas" className="text-gray-400 hover:text-white transition-colors">←</Link>
-          <div>
-            <p className="font-bold">{entryName}</p>
-            <p className="text-xs text-gray-500">{totalPredictions} / 72 pronósticos</p>
+      <header className="bg-white border-b border-gray-100 px-4 py-4 sticky top-0 z-10">
+        <div className="max-w-2xl mx-auto flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            <Link href="/mis-quinielas" className="text-gray-400 hover:text-gray-900 transition-colors">←</Link>
+            <div>
+              <p className="font-bold text-gray-900">{entryName}</p>
+              <p className="text-xs text-gray-400">{totalPredictions} / 72 pronósticos</p>
+            </div>
           </div>
-        </div>
-        <div className="w-24 bg-gray-800 rounded-full h-2">
-          <div
-            className="bg-green-500 h-2 rounded-full transition-all"
-            style={{ width: `${(totalPredictions / 72) * 100}%` }}
-          />
+          <div className="flex items-center gap-2">
+            <div className="w-20 bg-gray-100 rounded-full h-2">
+              <div className="h-2 rounded-full transition-all" style={{ width: `${(totalPredictions / 72) * 100}%`, backgroundColor: '#006847' }} />
+            </div>
+            <span className="text-xs text-gray-400">{Math.round((totalPredictions / 72) * 100)}%</span>
+          </div>
         </div>
       </header>
 
       <div className="max-w-2xl mx-auto px-4 py-6">
         {Object.entries(matchesByDate).map(([dateStr, dayMatches]) => (
           <div key={dateStr} className="mb-8">
-            <h2 className="text-gray-400 text-sm font-semibold uppercase tracking-wider mb-3 px-1">
-              📅 {dateStr}
-            </h2>
+            <div className="flex items-center gap-2 mb-3 px-1">
+              <div className="h-px flex-1 bg-gray-200" />
+              <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">📅 {dateStr}</span>
+              <div className="h-px flex-1 bg-gray-200" />
+            </div>
 
             <div className="flex flex-col gap-3">
               {dayMatches.map(match => {
@@ -212,59 +216,48 @@ export default function QuinielaPage() {
                 const isSaved = saved[match.id]
 
                 return (
-                  <div
-                    key={match.id}
-                    className={`bg-gray-900 rounded-2xl p-4 border ${
-                      locked ? 'border-gray-700 opacity-75' : 'border-gray-800'
-                    }`}
-                  >
-                    {/* Info del partido */}
+                  <div key={match.id}
+                    className={`bg-white rounded-2xl border shadow-sm p-4 ${locked ? 'border-gray-100 opacity-70' : 'border-gray-100'}`}>
+
+                    {/* Info */}
                     <div className="flex justify-between items-center mb-3">
-                      <span className="text-xs bg-gray-800 text-gray-400 px-2 py-1 rounded-full">
+                      <span className="text-xs font-semibold px-2 py-0.5 rounded-full text-white"
+                        style={{ backgroundColor: '#006847' }}>
                         Grupo {match.group_name}
                       </span>
-                      <span className="text-xs text-gray-500">
-                        {timeStr} · {match.city}, {match.country}
+                      <span className="text-xs text-gray-400">
+                        {timeStr} · {match.city}
                       </span>
                     </div>
 
                     {/* Equipos y marcador */}
-                    <div className="flex items-center justify-between gap-3">
-                      {/* Local */}
+                    <div className="flex items-center justify-between gap-2">
                       <div className="flex-1 flex flex-col items-center gap-1">
                         <span className="text-3xl">{match.home_team.flag}</span>
-                        <span className="text-sm text-center font-medium leading-tight">
+                        <span className="text-xs text-center font-medium text-gray-700 leading-tight">
                           {match.home_team.name}
                         </span>
                       </div>
 
-                      {/* Marcador */}
                       <div className="flex items-center gap-2">
-                        <input
-                          type="number"
-                          min="0"
-                          max="20"
-                          disabled={locked}
+                        <input type="number" min="0" max="20" disabled={locked}
                           value={pred?.predicted_home ?? ''}
                           onChange={e => handleScore(match.id, 'home', e.target.value)}
-                          className="w-12 h-12 text-center text-xl font-bold bg-gray-800 rounded-xl border border-gray-700 focus:border-green-500 focus:outline-none disabled:opacity-40 disabled:cursor-not-allowed"
+                          className="w-12 h-12 text-center text-xl font-bold border-2 rounded-xl outline-none transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-gray-900"
+                          style={{ borderColor: pred?.predicted_home !== null && pred?.predicted_home !== undefined ? '#006847' : '#e5e7eb' }}
                         />
-                        <span className="text-gray-600 font-bold">-</span>
-                        <input
-                          type="number"
-                          min="0"
-                          max="20"
-                          disabled={locked}
+                        <span className="text-gray-300 font-bold text-lg">—</span>
+                        <input type="number" min="0" max="20" disabled={locked}
                           value={pred?.predicted_away ?? ''}
                           onChange={e => handleScore(match.id, 'away', e.target.value)}
-                          className="w-12 h-12 text-center text-xl font-bold bg-gray-800 rounded-xl border border-gray-700 focus:border-green-500 focus:outline-none disabled:opacity-40 disabled:cursor-not-allowed"
+                          className="w-12 h-12 text-center text-xl font-bold border-2 rounded-xl outline-none transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-gray-900"
+                          style={{ borderColor: pred?.predicted_away !== null && pred?.predicted_away !== undefined ? '#006847' : '#e5e7eb' }}
                         />
                       </div>
 
-                      {/* Visitante */}
                       <div className="flex-1 flex flex-col items-center gap-1">
                         <span className="text-3xl">{match.away_team.flag}</span>
-                        <span className="text-sm text-center font-medium leading-tight">
+                        <span className="text-xs text-center font-medium text-gray-700 leading-tight">
                           {match.away_team.name}
                         </span>
                       </div>
@@ -273,15 +266,15 @@ export default function QuinielaPage() {
                     {/* Estado */}
                     <div className="mt-3 text-center text-xs">
                       {locked ? (
-                        <span className="text-red-400">🔒 Cerrado</span>
+                        <span className="text-red-400 font-medium">🔒 Cerrado</span>
                       ) : isSaving ? (
-                        <span className="text-yellow-400">Guardando...</span>
+                        <span className="text-yellow-500">Guardando...</span>
                       ) : isSaved ? (
-                        <span className="text-green-400">✓ Guardado</span>
-                      ) : pred?.predicted_home !== null && pred?.predicted_away !== null ? (
-                        <span className="text-gray-500">✓ Capturado</span>
+                        <span className="font-medium" style={{ color: '#006847' }}>✓ Guardado</span>
+                      ) : pred?.predicted_home !== null && pred?.predicted_home !== undefined ? (
+                        <span className="text-gray-400">✓ Capturado</span>
                       ) : (
-                        <span className="text-gray-600">Ingresa tu pronóstico</span>
+                        <span className="text-gray-300">Ingresa tu pronóstico</span>
                       )}
                     </div>
                   </div>

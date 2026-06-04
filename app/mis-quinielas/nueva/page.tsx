@@ -12,91 +12,69 @@ export default function NuevaQuinielaPage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
-  useEffect(() => {
-    loadEntriesCount()
-  }, [])
+  useEffect(() => { loadEntriesCount() }, [])
 
   async function loadEntriesCount() {
     const { data: { user } } = await supabase.auth.getUser()
-  console.log('Usuario:', user?.id)
-  console.log('Email:', user?.email)
-  if (!user) return
-
+    if (!user) return
     const { count } = await supabase
-      .from('entries')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_id', user.id)
-
+      .from('entries').select('*', { count: 'exact', head: true }).eq('user_id', user.id)
     setEntriesCount(count ?? 0)
   }
 
   async function handleCrear() {
-    console.log('URL:', process.env.NEXT_PUBLIC_SUPABASE_URL)
-    console.log('KEY:', process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.substring(0, 10))
     setError('')
     setLoading(true)
-
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { router.push('/login'); return }
 
-    const entryName = `Quiniela #${(entriesCount ?? 0) + 1}`
-
     const { data, error: insertError } = await supabase
       .from('entries')
-      .insert({ user_id: user.id, name: entryName })
-      .select()
-      .single()
+      .insert({ user_id: user.id, name: `Quiniela #${(entriesCount ?? 0) + 1}` })
+      .select().single()
 
-    if (insertError) {
-      setError('Error al crear la quiniela, intenta de nuevo')
-      setLoading(false)
-      return
-    }
-
+    if (insertError) { setError('Error al crear la quiniela, intenta de nuevo'); setLoading(false); return }
     router.push(`/mis-quinielas/${data.id}`)
   }
 
-  if (entriesCount === null) {
-    return (
-      <main className="min-h-screen bg-gray-950 flex items-center justify-center">
-        <p className="text-gray-400">Cargando...</p>
-      </main>
-    )
-  }
+  if (entriesCount === null) return (
+    <main className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <p className="text-gray-400">Cargando...</p>
+    </main>
+  )
 
   return (
-    <main className="min-h-screen bg-gray-950 text-white">
-      <header className="bg-gray-900 border-b border-gray-800 px-6 py-4 flex items-center gap-4">
-        <Link href="/mis-quinielas" className="text-gray-400 hover:text-white transition-colors">
-          ← Volver
-        </Link>
-        <span className="font-bold text-lg">Nueva quiniela</span>
+    <main className="min-h-screen bg-gray-50">
+      <header className="bg-white border-b border-gray-100 px-6 py-4">
+        <div className="max-w-md mx-auto flex items-center gap-4">
+          <Link href="/mis-quinielas" className="text-gray-400 hover:text-gray-900 transition-colors">←</Link>
+          <span className="font-semibold text-gray-900">Nueva quiniela</span>
+        </div>
       </header>
 
-      <div className="max-w-md mx-auto px-6 py-10">
-        <div className="text-center mb-8">
-          <div className="text-5xl mb-4">🏆</div>
-          <h1 className="text-2xl font-bold">Quiniela #{entriesCount + 1}</h1>
-          <p className="text-gray-400 mt-2 text-sm">
-            Se van a capturar los 72 pronósticos de la fase de grupos
+      <div className="max-w-md mx-auto px-4 py-10">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center">
+          <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-5"
+            style={{ background: 'linear-gradient(135deg, #006847, #2563eb)' }}>🏆</div>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Quiniela #{entriesCount + 1}</h1>
+          <p className="text-gray-500 text-sm mb-6">
+            Vas a capturar tus pronósticos para los 72 partidos de la fase de grupos
           </p>
+
+          <div className="bg-gray-50 rounded-xl p-4 text-sm text-gray-600 mb-6 text-left">
+            <p>💰 Costo: <span className="font-semibold text-gray-900">$200 pesos</span></p>
+            <p className="mt-1">🎯 1 punto por resultado correcto</p>
+            <p className="mt-1">🎯 3 puntos por marcador exacto</p>
+          </div>
+
+          {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
+
+          <button onClick={handleCrear} disabled={loading}
+            className="w-full text-white font-semibold py-4 rounded-xl transition-opacity disabled:opacity-60"
+            style={{ backgroundColor: '#006847' }}>
+            {loading ? 'Creando...' : 'Crear quiniela y capturar pronósticos'}
+          </button>
         </div>
-
-        <div className="bg-gray-900 border border-gray-800 rounded-xl p-4 text-sm text-gray-400 mb-6">
-          <p>💰 Esta quiniela tiene un costo de <span className="text-white font-semibold">$200 pesos</span></p>
-        </div>
-
-        {error && (
-          <p className="text-red-400 text-sm text-center mb-4">{error}</p>
-        )}
-
-        <button
-          onClick={handleCrear}
-          disabled={loading}
-          className="w-full bg-green-600 hover:bg-green-500 disabled:bg-green-900 text-white font-semibold py-4 rounded-2xl transition-colors"
-        >
-          {loading ? 'Creando...' : 'Crear quiniela y capturar pronósticos'}
-        </button>
       </div>
     </main>
   )
