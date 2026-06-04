@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '../lib/supabase'
+import Link from 'next/link'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -73,6 +74,12 @@ export default function LoginPage() {
           >
             {loading ? 'Entrando...' : 'Entrar'}
           </button>
+          <p className="text-center text-gray-400 text-sm">
+  ¿No tienes cuenta?{' '}
+  <Link href="/registro" className="text-green-400 hover:text-green-300">
+    Regístrate
+  </Link>
+</p>
         </form>
 
       </div>
