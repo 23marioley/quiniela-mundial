@@ -240,14 +240,14 @@ export default function QuinielaPage() {
                       </div>
 
                       <div className="flex items-center gap-2">
-                        <input type="number" min="0" max="20" disabled={locked}
+                        <input type="number" min="0" max="20" inputMode="numeric" pattern="[0-9]*" disabled={locked}
                           value={pred?.predicted_home ?? ''}
                           onChange={e => handleScore(match.id, 'home', e.target.value)}
                           className="w-12 h-12 text-center text-xl font-bold border-2 rounded-xl outline-none transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-gray-900"
                           style={{ borderColor: pred?.predicted_home !== null && pred?.predicted_home !== undefined ? '#006847' : '#e5e7eb' }}
                         />
                         <span className="text-gray-300 font-bold text-lg">—</span>
-                        <input type="number" min="0" max="20" disabled={locked}
+                        <input type="number" min="0" max="20" inputMode="numeric" pattern="[0-9]*" disabled={locked}
                           value={pred?.predicted_away ?? ''}
                           onChange={e => handleScore(match.id, 'away', e.target.value)}
                           className="w-12 h-12 text-center text-xl font-bold border-2 rounded-xl outline-none transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-gray-900"
