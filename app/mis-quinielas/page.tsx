@@ -46,7 +46,7 @@ export default function MisQuinielasPage() {
     router.push('/login')
   }
 
-  const torneoAbierto = new Date() < new Date('2026-06-11T19:00:00Z')
+const torneoAbierto = new Date() < new Date('2026-06-11T18:45:00Z')
 
   if (loading) return (
     <main className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -54,24 +54,41 @@ export default function MisQuinielasPage() {
     </main>
   )
 
+  async function handleDelete(entryId: number) {
+  const confirm = window.confirm('¿Seguro que quieres eliminar esta quiniela? Se borrarán todos sus pronósticos.')
+  if (!confirm) return
+
+  await supabase
+    .from('predictions')
+    .delete()
+    .eq('entry_id', entryId)
+
+  await supabase
+    .from('entries')
+    .delete()
+    .eq('id', entryId)
+
+  setEntries(prev => prev.filter(e => e.id !== entryId))
+}
+
   return (
     <main className="min-h-screen bg-gray-50">
       {/* Header */}
       <header className="bg-white border-b border-gray-100 px-4 py-4">
-  <div className="max-w-2xl mx-auto flex justify-between items-center">
-    <div className="flex items-center gap-3">
-      <NavMenu />
-      <div className="flex items-center gap-2">
-        <div className="w-8 h-8 rounded-lg flex items-center justify-center text-base"
-          style={{ background: 'linear-gradient(135deg, #006847, #2563eb)' }}>⚽</div>
-        <span className="font-bold text-gray-900">Mundial 2026</span>
-      </div>
-    </div>
-    <Link href="/rankings" className="text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors">
-      🏆 Rankings
-    </Link>
-  </div>
-</header>
+        <div className="max-w-2xl mx-auto flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            <NavMenu />
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center text-base"
+                style={{ background: 'linear-gradient(135deg, #006847, #2563eb)' }}>⚽</div>
+              <span className="font-bold text-gray-900">Mundial 2026</span>
+            </div>
+          </div>
+          <Link href="/rankings" className="text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors">
+            🏆 Rankings
+          </Link>
+        </div>
+      </header>
 
       <div className="max-w-2xl mx-auto px-4 py-8">
         <h1 className="text-2xl font-bold text-gray-900 mb-1">Hola, {displayName} 👋</h1>
@@ -86,25 +103,41 @@ export default function MisQuinielasPage() {
           </div>
         ) : (
           <div className="flex flex-col gap-3 mb-6">
-            {entries.map((entry, i) => (
-              <Link key={entry.id} href={`/mis-quinielas/${entry.id}`}
-                className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex justify-between items-center hover:border-green-200 hover:shadow-md transition-all">
-                <div>
-                  <p className="font-semibold text-gray-900">{entry.name}</p>
-                  <div className="flex items-center gap-2 mt-2">
-                    <div className="h-1.5 w-24 bg-gray-100 rounded-full overflow-hidden">
-                      <div className="h-full rounded-full transition-all"
-                        style={{ width: `${(entry.predictions_count / 72) * 100}%`, backgroundColor: '#006847' }} />
+            {entries.map((entry, i) => {
+              const torneoAbierto = new Date() < new Date('2026-06-11T18:45:00Z')
+              return (
+                <div key={entry.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:border-green-200 hover:shadow-md transition-all">
+                  <Link href={`/mis-quinielas/${entry.id}`} className="p-5 flex justify-between items-center block">
+                    <div>
+                      <p className="font-semibold text-gray-900">{entry.name}</p>
+                      <div className="flex items-center gap-2 mt-2">
+                        <div className="h-1.5 w-24 bg-gray-100 rounded-full overflow-hidden">
+                          <div className="h-full rounded-full transition-all"
+                            style={{ width: `${(entry.predictions_count / 72) * 100}%`, backgroundColor: '#006847' }} />
+                        </div>
+                        <span className="text-xs text-gray-400">{entry.predictions_count}/72</span>
+                      </div>
                     </div>
-                    <span className="text-xs text-gray-400">{entry.predictions_count}/72</span>
-                  </div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-xs text-gray-400">#{i + 1}</span>
+                      <span className="text-gray-300">›</span>
+                    </div>
+                  </Link>
+
+                  {/* Botón eliminar */}
+                  {torneoAbierto && (
+                    <div className="px-5 pb-4">
+                      <button
+                        onClick={() => handleDelete(entry.id)}
+                        className="text-xs text-red-400 hover:text-red-600 transition-colors"
+                      >
+                        🗑️ Eliminar quiniela
+                      </button>
+                    </div>
+                  )}
                 </div>
-                <div className="flex items-center gap-3">
-                  <span className="text-xs text-gray-400">#{i + 1}</span>
-                  <span className="text-gray-300">›</span>
-                </div>
-              </Link>
-            ))}
+              )
+            })}
           </div>
         )}
 
