@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { createClient } from '../../lib/supabase'
 import Link from 'next/link'
+import NavMenu from '../../components/NavMenu'
 
 type Team = { id: number; name: string; flag: string }
 type Match = {
@@ -28,8 +29,8 @@ type Prediction = {
   points_earned: number | null
 }
 
-const MONTHS = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic']
-const DAYS = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb']
+const MONTHS = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic']
+const DAYS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
 
 function formatDate(utcString: string) {
   const d = new Date(utcString)
@@ -81,26 +82,26 @@ export default function QuinielaPage() {
 
     // Cargar partidos con equipos y grupos
     const { data: matchesData } = await supabase
-    .from('matches')
-    .select(`
+      .from('matches')
+      .select(`
         id, match_number, match_date, venue, city, country, status,
         home_score, away_score, group_id,
         groups!inner(name),
         home_team:teams!matches_home_team_id_fkey(id, name, flag),
         away_team:teams!matches_away_team_id_fkey(id, name, flag)
     `)
-    .order('match_date', { ascending: true })
+      .order('match_date', { ascending: true })
 
     if (matchesData) {
-        //   console.log('Primer partido:', JSON.stringify(matchesData[0], null, 2))
+      //   console.log('Primer partido:', JSON.stringify(matchesData[0], null, 2))
 
-    const formatted = matchesData.map((m: any) => ({
+      const formatted = matchesData.map((m: any) => ({
         ...m,
         group_name: Array.isArray(m.groups) ? m.groups[0]?.name : m.groups?.name ?? '',
         home_team: Array.isArray(m.home_team) ? m.home_team[0] : m.home_team,
         away_team: Array.isArray(m.away_team) ? m.away_team[0] : m.away_team,
-    }))
-    setMatches(formatted)
+      }))
+      setMatches(formatted)
     }
 
     // Cargar pronósticos existentes
@@ -183,7 +184,7 @@ export default function QuinielaPage() {
       <header className="bg-white border-b border-gray-100 px-4 py-4 sticky top-0 z-10">
         <div className="max-w-2xl mx-auto flex justify-between items-center">
           <div className="flex items-center gap-3">
-            <Link href="/mis-quinielas" className="text-gray-400 hover:text-gray-900 transition-colors">←</Link>
+            <NavMenu />
             <div>
               <p className="font-bold text-gray-900">{entryName}</p>
               <p className="text-xs text-gray-400">{totalPredictions} / 72 pronósticos</p>
@@ -191,7 +192,8 @@ export default function QuinielaPage() {
           </div>
           <div className="flex items-center gap-2">
             <div className="w-20 bg-gray-100 rounded-full h-2">
-              <div className="h-2 rounded-full transition-all" style={{ width: `${(totalPredictions / 72) * 100}%`, backgroundColor: '#006847' }} />
+              <div className="h-2 rounded-full transition-all"
+                style={{ width: `${(totalPredictions / 72) * 100}%`, backgroundColor: '#006847' }} />
             </div>
             <span className="text-xs text-gray-400">{Math.round((totalPredictions / 72) * 100)}%</span>
           </div>
@@ -264,17 +266,53 @@ export default function QuinielaPage() {
                     </div>
 
                     {/* Estado */}
-                    <div className="mt-3 text-center text-xs">
-                      {locked ? (
-                        <span className="text-red-400 font-medium">🔒 Cerrado</span>
-                      ) : isSaving ? (
-                        <span className="text-yellow-500">Guardando...</span>
-                      ) : isSaved ? (
-                        <span className="font-medium" style={{ color: '#006847' }}>✓ Guardado</span>
-                      ) : pred?.predicted_home !== null && pred?.predicted_home !== undefined ? (
-                        <span className="text-gray-400">✓ Capturado</span>
-                      ) : (
-                        <span className="text-gray-300">Ingresa tu pronóstico</span>
+                    <div className="mt-3 flex items-center justify-center gap-2">
+                      {/* Badge de puntos si el partido terminó */}
+                      {match.status === 'finished' && (
+                        <div className="flex items-center gap-2">
+                          {/* Resultado real */}
+                          <span className="text-xs text-gray-400">
+                            Real: {match.home_score} — {match.away_score}
+                          </span>
+                          {/* Badge */}
+                          {pred?.points_earned === 3 && (
+                            <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-700">
+                              +3 🎯
+                            </span>
+                          )}
+                          {pred?.points_earned === 1 && (
+                            <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-700">
+                              +1 ✓
+                            </span>
+                          )}
+                          {pred?.points_earned === 0 && (
+                            <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-red-50 text-red-400">
+                              +0 ✗
+                            </span>
+                          )}
+                          {pred?.points_earned === null && (
+                            <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-400">
+                              Sin pronóstico
+                            </span>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Estado normal si no ha terminado */}
+                      {match.status !== 'finished' && (
+                        <span className="text-xs">
+                          {locked ? (
+                            <span className="text-red-400 font-medium">🔒 Cerrado</span>
+                          ) : isSaving ? (
+                            <span className="text-yellow-500">Guardando...</span>
+                          ) : isSaved ? (
+                            <span className="font-medium" style={{ color: '#006847' }}>✓ Guardado</span>
+                          ) : pred?.predicted_home !== null && pred?.predicted_home !== undefined ? (
+                            <span className="text-gray-400">✓ Capturado</span>
+                          ) : (
+                            <span className="text-gray-300">Ingresa tu pronóstico</span>
+                          )}
+                        </span>
                       )}
                     </div>
                   </div>

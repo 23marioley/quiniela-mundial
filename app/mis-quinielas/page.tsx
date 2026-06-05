@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '../lib/supabase'
 import Link from 'next/link'
+import NavMenu from '../components/NavMenu'
 
 type Entry = { id: number; name: string; created_at: string; predictions_count: number }
 
@@ -56,23 +57,21 @@ export default function MisQuinielasPage() {
   return (
     <main className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white border-b border-gray-100 px-6 py-4">
-        <div className="max-w-2xl mx-auto flex justify-between items-center">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center text-lg"
-              style={{ background: 'linear-gradient(135deg, #006847, #2563eb)' }}>⚽</div>
-            <span className="font-bold text-gray-900">Mundial 2026</span>
-          </div>
-          <div className="flex items-center gap-4">
-            <Link href="/rankings" className="text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors">
-              🏆 Rankings
-            </Link>
-            <button onClick={handleLogout} className="text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors">
-              Salir
-            </button>
-          </div>
-        </div>
-      </header>
+      <header className="bg-white border-b border-gray-100 px-4 py-4">
+  <div className="max-w-2xl mx-auto flex justify-between items-center">
+    <div className="flex items-center gap-3">
+      <NavMenu />
+      <div className="flex items-center gap-2">
+        <div className="w-8 h-8 rounded-lg flex items-center justify-center text-base"
+          style={{ background: 'linear-gradient(135deg, #006847, #2563eb)' }}>⚽</div>
+        <span className="font-bold text-gray-900">Mundial 2026</span>
+      </div>
+    </div>
+    <Link href="/rankings" className="text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors">
+      🏆 Rankings
+    </Link>
+  </div>
+</header>
 
       <div className="max-w-2xl mx-auto px-4 py-8">
         <h1 className="text-2xl font-bold text-gray-900 mb-1">Hola, {displayName} 👋</h1>
