@@ -24,10 +24,10 @@ type UserSummary = {
     id: string
     display_name: string
     username: string
-    email: string
     entries_count: number
     total_predictions: number
     total_due: number
+    avatar_url?: string
 }
 
 const MONTHS = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic']
@@ -120,7 +120,7 @@ export default function AdminPage() {
 
         const { data: profiles } = await supabase
             .from('profiles')
-            .select('id, display_name, username')
+            .select('id, display_name, username, avatar_url')
 
         if (!profiles) { setLoadingUsers(false); return }
 
@@ -139,10 +139,10 @@ export default function AdminPage() {
             id: p.id,
             display_name: p.display_name,
             username: p.username ?? '-',
-            email: '',
             entries_count: entriesByUser[p.id]?.count ?? 0,
             total_predictions: entriesByUser[p.id]?.predictions ?? 0,
-            total_due: (entriesByUser[p.id]?.count ?? 0) * 200
+            total_due: (entriesByUser[p.id]?.count ?? 0) * 200,
+            avatar_url: p.avatar_url ?? null
         }))
 
         const total = formatted.reduce((sum, u) => sum + u.total_due, 0)
@@ -174,6 +174,31 @@ export default function AdminPage() {
         setMatches(ms => ms.map(m => m.id === match.id
             ? { ...m, home_score: parseInt(score.home), away_score: parseInt(score.away), status: 'finished' }
             : m
+        ))
+    }
+
+    async function handleAvatarUpload(userId: string, file: File) {
+        const fileExt = file.name.split('.').pop()
+        const fileName = `${userId}.${fileExt}`
+
+        const { error: uploadError } = await supabase.storage
+            .from('avatars')
+            .upload(fileName, file, { upsert: true })
+
+        if (uploadError) { alert('Error al subir la foto'); return }
+
+        const { data: urlData } = supabase.storage
+            .from('avatars')
+            .getPublicUrl(fileName)
+
+        await supabase
+            .from('profiles')
+            .update({ avatar_url: urlData.publicUrl })
+            .eq('id', userId)
+
+        // Actualizar estado local
+        setUsers(prev => prev.map(u =>
+            u.id === userId ? { ...u, avatar_url: urlData.publicUrl } : u
         ))
     }
 
@@ -381,9 +406,31 @@ export default function AdminPage() {
                                 {users.map(user => (
                                     <div key={user.id} className="px-5 py-4">
                                         <div className="flex justify-between items-start">
-                                            <div>
-                                                <p className="font-semibold text-gray-900">{user.display_name}</p>
-                                                <p className="text-xs text-gray-400">@{user.username}</p>
+                                            <div className="flex items-center gap-3">
+                                                {/* Avatar */}
+                                                <div className="relative">
+                                                    <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center">
+                                                        {user.avatar_url ? (
+                                                            <img src={user.avatar_url} alt={user.display_name}
+                                                                className="w-full h-full object-cover" />
+                                                        ) : (
+                                                            <span className="text-lg">👤</span>
+                                                        )}
+                                                    </div>
+                                                    <label className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center cursor-pointer text-white text-xs"
+                                                        style={{ backgroundColor: '#006847' }}>
+                                                        +
+                                                        <input type="file" accept="image/*" className="hidden"
+                                                            onChange={e => {
+                                                                const file = e.target.files?.[0]
+                                                                if (file) handleAvatarUpload(user.id, file)
+                                                            }} />
+                                                    </label>
+                                                </div>
+                                                <div>
+                                                    <p className="font-semibold text-gray-900">{user.display_name}</p>
+                                                    <p className="text-xs text-gray-400">@{user.username}</p>
+                                                </div>
                                             </div>
                                             <div className="text-right">
                                                 <p className="font-bold text-lg" style={{ color: '#006847' }}>
