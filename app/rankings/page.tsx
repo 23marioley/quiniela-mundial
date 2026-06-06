@@ -16,6 +16,7 @@ type RankingEntry = {
   correct_results: number
   matches_played: number
   position: number
+  avatar_url?: string
 }
 
 export default function RankingsPage() {
@@ -58,17 +59,17 @@ export default function RankingsPage() {
     <main className="min-h-screen bg-gray-50">
       {/* Header */}
       <header className="bg-white border-b border-gray-100 px-4 py-4 sticky top-0 z-10">
-  <div className="max-w-2xl mx-auto flex items-center justify-between">
-    <div className="flex items-center gap-3">
-      <NavMenu />
-      <div>
-        <p className="font-bold text-gray-900">Rankings</p>
-        <p className="text-xs text-gray-400">{rankings.length} quinielas registradas</p>
-      </div>
-    </div>
-    <span className="text-2xl">🏆</span>
-  </div>
-</header>
+        <div className="max-w-2xl mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <NavMenu />
+            <div>
+              <p className="font-bold text-gray-900">Rankings</p>
+              <p className="text-xs text-gray-400">{rankings.length} quinielas registradas</p>
+            </div>
+          </div>
+          <span className="text-2xl">🏆</span>
+        </div>
+      </header>
 
       <div className="max-w-2xl mx-auto px-4 py-6">
 
@@ -81,6 +82,13 @@ export default function RankingsPage() {
               {/* 2do lugar */}
               <div className="flex flex-col items-center gap-2 pb-2">
                 <span className="text-3xl">🥈</span>
+                <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center border-2 border-gray-300">
+                  {rankings[1].avatar_url ? (
+                    <img src={rankings[1].avatar_url} className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-xl">👤</span>
+                  )}
+                </div>
                 <div className="text-center">
                   <p className="font-semibold text-gray-900 text-sm">{rankings[1].display_name}</p>
                   <p className="text-xs text-gray-400">{rankings[1].entry_name}</p>
@@ -94,6 +102,13 @@ export default function RankingsPage() {
               {/* 1er lugar */}
               <div className="flex flex-col items-center gap-2">
                 <span className="text-4xl">🥇</span>
+                <div className="w-14 h-14 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center border-2 border-yellow-400">
+                  {rankings[0].avatar_url ? (
+                    <img src={rankings[0].avatar_url} className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-2xl">👤</span>
+                  )}
+                </div>
                 <div className="text-center">
                   <p className="font-bold text-gray-900">{rankings[0].display_name}</p>
                   <p className="text-xs text-gray-400">{rankings[0].entry_name}</p>
@@ -108,6 +123,13 @@ export default function RankingsPage() {
               {/* 3er lugar */}
               <div className="flex flex-col items-center gap-2 pb-4">
                 <span className="text-3xl">🥉</span>
+                <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center border-2 border-amber-600">
+                  {rankings[2].avatar_url ? (
+                    <img src={rankings[2].avatar_url} className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-xl">👤</span>
+                  )}
+                </div>
                 <div className="text-center">
                   <p className="font-semibold text-gray-900 text-sm">{rankings[2].display_name}</p>
                   <p className="text-xs text-gray-400">{rankings[2].entry_name}</p>
@@ -148,6 +170,15 @@ export default function RankingsPage() {
                         <span className="text-xl">{medal}</span>
                       ) : (
                         <span className="text-sm font-semibold text-gray-400">#{entry.position}</span>
+                      )}
+                    </div>
+
+                    {/* Avatar */}
+                    <div className="w-9 h-9 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center flex-shrink-0">
+                      {entry.avatar_url ? (
+                        <img src={entry.avatar_url} className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="text-base">👤</span>
                       )}
                     </div>
 
