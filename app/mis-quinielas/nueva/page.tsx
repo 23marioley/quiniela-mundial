@@ -67,7 +67,7 @@ export default function NuevaQuinielaPage() {
 
           <div className="bg-gray-50 rounded-xl p-4 text-sm text-gray-600 mb-6 text-left">
             <p>💰 Costo: <span className="font-semibold text-gray-900">$200 pesos</span></p>
-            <p className="mt-1">🎯 1 punto por resultado correcto</p>
+            <p className="mt-1">✅ 1 punto por resultado correcto</p>
             <p className="mt-1">🎯 3 puntos por marcador exacto</p>
           </div>
 

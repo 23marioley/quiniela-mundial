@@ -212,7 +212,7 @@ export default function RankingsPage() {
         {/* Leyenda */}
         <div className="mt-4 bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
           <p className="text-xs text-gray-400 text-center">
-            🎯 Marcador exacto = 3 pts &nbsp;·&nbsp; ✓ Resultado correcto = 1 pt
+            🎯 Marcador exacto = 3 pts &nbsp;·&nbsp; ✅ Resultado correcto = 1 pt
           </p>
         </div>
 

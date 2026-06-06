@@ -298,7 +298,7 @@ export default function QuinielaPage() {
                             Real: {match.home_score} — {match.away_score}
                           </span>
                           {pts === 3 && <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-700">+3 🎯</span>}
-                          {pts === 1 && <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-700">+1 ✓</span>}
+                          {pts === 1 && <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-700">+1 ✅</span>}
                           {pts === 0 && <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-red-50 text-red-400">+0 ✗</span>}
                           {pts === null && <span className="px-2 py-0.5 rounded-full text-xs bg-gray-100 text-gray-400">Sin pronóstico</span>}
                         </div>

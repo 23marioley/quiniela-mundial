@@ -73,10 +73,11 @@ export default function NavMenu() {
 
     const links = [
         { href: '/mis-quinielas', label: 'Mis Quinielas', icon: '🏠', disabled: false },
+        { href: '/grupos', label: 'Grupos', icon: '🌍', disabled: false },
         { href: '/rankings', label: 'Rankings', icon: '🏆', disabled: false },
         { href: '/grupo', label: 'Pronósticos del grupo', icon: '👁️', disabled: !grupoActivo },
         ...(isAdmin ? [{ href: '/admin', label: 'Panel Admin', icon: '⚙️', disabled: false }] : []),
-    ]
+        ]
 
     return (
         <>
