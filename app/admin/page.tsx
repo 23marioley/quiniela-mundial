@@ -205,27 +205,42 @@ export default function AdminPage() {
     }
 
     async function handleAvatarUpload(userId: string, file: File) {
-        const fileExt = file.name.split('.').pop()
-        const fileName = `${userId}.${fileExt}`
+        // Validar tamaño máximo 2MB
+        if (file.size > 2 * 1024 * 1024) {
+            alert('La foto no puede pesar más de 2MB')
+            return
+        }
 
+        // Forzar extensión jpg para compatibilidad
+        const fileName = `${userId}.jpg`
+
+        // Convertir a blob con compresión si es necesario
         const { error: uploadError } = await supabase.storage
             .from('avatars')
-            .upload(fileName, file, { upsert: true })
+            .upload(fileName, file, {
+                upsert: true,
+                contentType: 'image/jpeg'
+            })
 
-        if (uploadError) { alert('Error al subir la foto'); return }
+        if (uploadError) {
+            alert('Error al subir: ' + uploadError.message)
+            return
+        }
 
         const { data: urlData } = supabase.storage
             .from('avatars')
             .getPublicUrl(fileName)
 
+        // Agregar timestamp para evitar caché
+        const urlWithCache = urlData.publicUrl + '?t=' + Date.now()
+
         await supabase
             .from('profiles')
-            .update({ avatar_url: urlData.publicUrl })
+            .update({ avatar_url: urlWithCache })
             .eq('id', userId)
 
-        // Actualizar estado local
         setUsers(prev => prev.map(u =>
-            u.id === userId ? { ...u, avatar_url: urlData.publicUrl } : u
+            u.id === userId ? { ...u, avatar_url: urlWithCache } : u
         ))
     }
 
@@ -250,16 +265,16 @@ export default function AdminPage() {
     return (
         <main className="min-h-screen bg-gray-50">
             <header className="bg-white border-b border-gray-100 px-4 py-4 sticky top-0 z-10">
-            <div className="max-w-2xl mx-auto flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                <NavMenu />
-                <div>
-                    <p className="font-bold text-gray-900">Panel Admin</p>
-                    <p className="text-xs text-gray-400">{totalFinished} / 72 partidos terminados</p>
+                <div className="max-w-2xl mx-auto flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <NavMenu />
+                        <div>
+                            <p className="font-bold text-gray-900">Panel Admin</p>
+                            <p className="text-xs text-gray-400">{totalFinished} / 72 partidos terminados</p>
+                        </div>
+                    </div>
+                    <UserChip />
                 </div>
-                </div>
-                <UserChip />
-            </div>
             </header>
             {/* Pestañas */}
             <div className="bg-white border-b border-gray-100">

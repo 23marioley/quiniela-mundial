@@ -16,6 +16,8 @@ export default function MisQuinielasPage() {
   const [displayName, setDisplayName] = useState('')
   const [loading, setLoading] = useState(true)
   const PRECIO = 200
+  const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 })
+  const [entryToDelete, setEntryToDelete] = useState<number | null>(null)
 
   useEffect(() => { loadData() }, [])
 
@@ -49,6 +51,30 @@ export default function MisQuinielasPage() {
 
   const torneoAbierto = new Date() < new Date('2026-06-11T09:00:00Z')
 
+  useEffect(() => {
+    function calcTime() {
+      const deadline = new Date('2026-06-11T09:00:00Z')
+      const now = new Date()
+      const diff = deadline.getTime() - now.getTime()
+
+      if (diff <= 0) {
+        setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 })
+        return
+      }
+
+      setTimeLeft({
+        days: Math.floor(diff / (1000 * 60 * 60 * 24)),
+        hours: Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+        minutes: Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)),
+        seconds: Math.floor((diff % (1000 * 60)) / 1000),
+      })
+    }
+
+    calcTime()
+    const interval = setInterval(calcTime, 1000)
+    return () => clearInterval(interval)
+  }, [])
+
   if (loading) return (
     <main className="min-h-screen bg-gray-50 flex items-center justify-center">
       <p className="text-gray-400">Cargando...</p>
@@ -56,9 +82,6 @@ export default function MisQuinielasPage() {
   )
 
   async function handleDelete(entryId: number) {
-    const confirm = window.confirm('¿Seguro que quieres eliminar esta quiniela? Se borrarán todos sus pronósticos.')
-    if (!confirm) return
-
     await supabase
       .from('predictions')
       .delete()
@@ -70,6 +93,7 @@ export default function MisQuinielasPage() {
       .eq('id', entryId)
 
     setEntries(prev => prev.filter(e => e.id !== entryId))
+    setEntryToDelete(null)
   }
 
   return (
@@ -95,6 +119,31 @@ export default function MisQuinielasPage() {
       </header>
 
       <div className="max-w-2xl mx-auto px-4 py-8">
+        {torneoAbierto && (
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-6">
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider text-center mb-4">
+              ⏰ Tiempo para llenar tu quiniela
+            </p>
+            <div className="grid grid-cols-4 gap-2">
+              {[
+                { value: timeLeft.days, label: 'Días' },
+                { value: timeLeft.hours, label: 'Horas' },
+                { value: timeLeft.minutes, label: 'Minutos' },
+                { value: timeLeft.seconds, label: 'Segundos' },
+              ].map(({ value, label }) => (
+                <div key={label} className="flex flex-col items-center">
+                  <div className="w-full py-3 rounded-xl text-center font-black text-2xl text-white shadow-sm"
+                    // style={{ background: 'linear-gradient(135deg, #006847, #004d35)' }}
+                    style={{ background: 'linear-gradient(135deg, #dc2626, #991b1b)' }}>
+
+                    {String(value).padStart(2, '0')}
+                  </div>
+                  <span className="text-xs text-gray-400 mt-1.5 font-medium">{label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
         <h1 className="text-2xl font-bold text-gray-900 mb-1">Hola, {displayName} 👋</h1>
         <p className="text-gray-500 mb-8">Tus quinielas del Mundial 2026</p>
 
@@ -132,7 +181,7 @@ export default function MisQuinielasPage() {
                   {torneoAbierto && (
                     <div className="px-5 pb-4">
                       <button
-                        onClick={() => handleDelete(entry.id)}
+                        onClick={() => setEntryToDelete(entry.id)}
                         className="text-xs text-red-400 hover:text-red-600 transition-colors"
                       >
                         🗑️ Eliminar quiniela
@@ -176,6 +225,34 @@ export default function MisQuinielasPage() {
           </div>
         )}
       </div>
+      {/* Modal confirmación eliminar */}
+      {entryToDelete && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center px-4">
+          <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm">
+            <div className="text-center mb-5">
+              <div className="text-4xl mb-3">🗑️</div>
+              <h3 className="font-bold text-gray-900 text-lg">¿Eliminar quiniela?</h3>
+              <p className="text-gray-400 text-sm mt-2">
+                Se borrarán todos los pronósticos de esta quiniela. Esta acción no se puede deshacer.
+              </p>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setEntryToDelete(null)}
+                className="flex-1 py-3 rounded-xl border-2 border-gray-200 text-gray-600 font-semibold text-sm transition-colors hover:bg-gray-50"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={() => handleDelete(entryToDelete)}
+                className="flex-1 py-3 rounded-xl bg-red-500 hover:bg-red-600 text-white font-semibold text-sm transition-colors"
+              >
+                Sí, eliminar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   )
 }

@@ -27,6 +27,8 @@ export default function RegistroPage() {
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(false)
   const [frase, setFrase] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirm, setShowConfirm] = useState(false)
 
   useEffect(() => {
     setFrase(FRASES[Math.floor(Math.random() * FRASES.length)])
@@ -156,9 +158,8 @@ export default function RegistroPage() {
                 <input
                   type="text" value={groupCode}
                   onChange={e => { setGroupCode(e.target.value); setErrors({}) }}
-                  className={`w-full border-2 rounded-xl px-4 py-3 text-gray-900 outline-none transition-colors uppercase ${
-                    errors.groupCode ? 'border-red-300 bg-red-50' : 'border-gray-100 focus:border-green-500'
-                  }`}
+                  className={`w-full border-2 rounded-xl px-4 py-3 text-gray-900 outline-none transition-colors uppercase ${errors.groupCode ? 'border-red-300 bg-red-50' : 'border-gray-100 focus:border-green-500'
+                    }`}
                   placeholder="Ej. FAMILIA2026"
                   autoCapitalize="characters"
                 />
@@ -172,9 +173,8 @@ export default function RegistroPage() {
                 <input
                   type="text" value={username}
                   onChange={e => { setUsername(e.target.value); setErrors({}) }}
-                  className={`w-full border-2 rounded-xl px-4 py-3 text-gray-900 outline-none transition-colors ${
-                    errors.username ? 'border-red-300 bg-red-50' : 'border-gray-100 focus:border-green-500'
-                  }`}
+                  className={`w-full border-2 rounded-xl px-4 py-3 text-gray-900 outline-none transition-colors ${errors.username ? 'border-red-300 bg-red-50' : 'border-gray-100 focus:border-green-500'
+                    }`}
                   placeholder="ej. mario_ley"
                   autoCapitalize="none"
                   autoCorrect="off"
@@ -188,9 +188,8 @@ export default function RegistroPage() {
                 <input
                   type="email" value={email}
                   onChange={e => { setEmail(e.target.value); setErrors({}) }}
-                  className={`w-full border-2 rounded-xl px-4 py-3 text-gray-900 outline-none transition-colors ${
-                    errors.email ? 'border-red-300 bg-red-50' : 'border-gray-100 focus:border-green-500'
-                  }`}
+                  className={`w-full border-2 rounded-xl px-4 py-3 text-gray-900 outline-none transition-colors ${errors.email ? 'border-red-300 bg-red-50' : 'border-gray-100 focus:border-green-500'
+                    }`}
                   placeholder="tu@correo.com"
                 />
                 {errors.email && <p className="text-red-500 text-xs mt-1.5 flex items-center gap-1"><span>⚠️</span> {errors.email}</p>}
@@ -199,28 +198,45 @@ export default function RegistroPage() {
               {/* Password */}
               <div>
                 <label className="text-sm font-semibold text-gray-700 mb-1.5 block">Contraseña</label>
-                <input
-                  type="password" value={password}
-                  onChange={e => { setPassword(e.target.value); setErrors({}) }}
-                  className={`w-full border-2 rounded-xl px-4 py-3 text-gray-900 outline-none transition-colors ${
-                    errors.password ? 'border-red-300 bg-red-50' : 'border-gray-100 focus:border-green-500'
-                  }`}
-                  placeholder="Mínimo 6 caracteres"
-                />
+                <div className="relative">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={e => { setPassword(e.target.value); setErrors({}) }}
+                    className={`w-full border-2 rounded-xl px-4 py-3 pr-12 text-gray-900 outline-none transition-colors ${errors.password ? 'border-red-300 bg-red-50' : 'border-gray-100 focus:border-green-500'
+                      }`}
+                    placeholder="Mínimo 6 caracteres"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    {showPassword ? '🙈' : '👁️'}
+                  </button>
+                </div>
                 {errors.password && <p className="text-red-500 text-xs mt-1.5 flex items-center gap-1"><span>⚠️</span> {errors.password}</p>}
               </div>
 
-              {/* Confirm */}
               <div>
                 <label className="text-sm font-semibold text-gray-700 mb-1.5 block">Confirmar contraseña</label>
-                <input
-                  type="password" value={confirm}
-                  onChange={e => { setConfirm(e.target.value); setErrors({}) }}
-                  className={`w-full border-2 rounded-xl px-4 py-3 text-gray-900 outline-none transition-colors ${
-                    errors.confirm ? 'border-red-300 bg-red-50' : 'border-gray-100 focus:border-green-500'
-                  }`}
-                  placeholder="Repite tu contraseña"
-                />
+                <div className="relative">
+                  <input
+                    type={showConfirm ? 'text' : 'password'}
+                    value={confirm}
+                    onChange={e => { setConfirm(e.target.value); setErrors({}) }}
+                    className={`w-full border-2 rounded-xl px-4 py-3 pr-12 text-gray-900 outline-none transition-colors ${errors.confirm ? 'border-red-300 bg-red-50' : 'border-gray-100 focus:border-green-500'
+                      }`}
+                    placeholder="Repite tu contraseña"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirm(!showConfirm)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    {showConfirm ? '🙈' : '👁️'}
+                  </button>
+                </div>
                 {errors.confirm && <p className="text-red-500 text-xs mt-1.5 flex items-center gap-1"><span>⚠️</span> {errors.confirm}</p>}
               </div>
 
@@ -238,8 +254,8 @@ export default function RegistroPage() {
                 {loading ? (
                   <>
                     <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                     </svg>
                     Creando cuenta...
                   </>

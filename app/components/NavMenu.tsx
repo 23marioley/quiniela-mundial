@@ -69,11 +69,13 @@ export default function NavMenu() {
         router.push('/login')
     }
 
+    const grupoActivo = new Date() >= new Date('2026-06-11T09:00:00Z')
+
     const links = [
-        { href: '/mis-quinielas', label: 'Mis Quinielas', icon: '🏠' },
-        { href: '/rankings', label: 'Rankings', icon: '🏆' },
-        { href: '/grupo', label: 'Pronósticos del grupo', icon: '👁️' },
-        ...(isAdmin ? [{ href: '/admin', label: 'Panel Admin', icon: '⚙️' }] : []),
+        { href: '/mis-quinielas', label: 'Mis Quinielas', icon: '🏠', disabled: false },
+        { href: '/rankings', label: 'Rankings', icon: '🏆', disabled: false },
+        { href: '/grupo', label: 'Pronósticos del grupo', icon: '👁️', disabled: !grupoActivo },
+        ...(isAdmin ? [{ href: '/admin', label: 'Panel Admin', icon: '⚙️', disabled: false }] : []),
     ]
 
     return (
@@ -109,7 +111,16 @@ export default function NavMenu() {
                 <nav className="px-4 py-6 flex flex-col gap-1">
                     {links.map(link => {
                         const active = pathname.startsWith(link.href)
-                        return (
+                        return link.disabled ? (
+                            <div
+                                key={link.href}
+                                className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-gray-300 cursor-not-allowed opacity-50"
+                            >
+                                <span className="text-lg">{link.icon}</span>
+                                {link.label}
+                                <span className="ml-auto text-xs">🔒</span>
+                            </div>
+                        ) : (
                             <Link
                                 key={link.href}
                                 href={link.href}
@@ -137,42 +148,42 @@ export default function NavMenu() {
             </div>
         </>
     )
-    
+
 }
 
 export function UserChip() {
-  const supabase = createClient()
-  const [profile, setProfile] = useState<{ display_name: string; avatar_url: string | null } | null>(null)
+    const supabase = createClient()
+    const [profile, setProfile] = useState<{ display_name: string; avatar_url: string | null } | null>(null)
 
-  useEffect(() => {
-    async function loadProfile() {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
-      const { data } = await supabase
-        .from('profiles')
-        .select('display_name, avatar_url')
-        .eq('id', user.id)
-        .single()
-      if (data) setProfile(data)
-    }
-    loadProfile()
-  }, [])
+    useEffect(() => {
+        async function loadProfile() {
+            const { data: { user } } = await supabase.auth.getUser()
+            if (!user) return
+            const { data } = await supabase
+                .from('profiles')
+                .select('display_name, avatar_url')
+                .eq('id', user.id)
+                .single()
+            if (data) setProfile(data)
+        }
+        loadProfile()
+    }, [])
 
-  if (!profile) return null
+    if (!profile) return null
 
-  return (
-    <div className="flex items-center gap-2">
-      <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center flex-shrink-0 border-2"
-        style={{ borderColor: '#006847' }}>
-        {profile.avatar_url ? (
-          <img src={profile.avatar_url} className="w-full h-full object-cover" alt={profile.display_name} />
-        ) : (
-          <span className="text-sm">👤</span>
-        )}
-      </div>
-      <span className="text-sm font-semibold text-gray-700 hidden sm:block truncate max-w-24">
-        {profile.display_name}
-      </span>
-    </div>
-  )
+    return (
+        <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center flex-shrink-0 border-2"
+                style={{ borderColor: '#006847' }}>
+                {profile.avatar_url ? (
+                    <img src={profile.avatar_url} className="w-full h-full object-cover" alt={profile.display_name} />
+                ) : (
+                    <span className="text-sm">👤</span>
+                )}
+            </div>
+            <span className="text-sm font-semibold text-gray-700 hidden sm:block truncate max-w-24">
+                {profile.display_name}
+            </span>
+        </div>
+    )
 }

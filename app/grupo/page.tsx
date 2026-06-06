@@ -39,6 +39,29 @@ function formatDate(utcString: string) {
     return { dayStr: `${day} ${date} ${month}`, timeStr: `${h}:${minutes} ${ampm}` }
 }
 
+function AvatarImage({ userId }: { userId: string }) {
+    const supabase = createClient()
+    const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
+
+    useEffect(() => {
+        async function load() {
+            const { data } = await supabase
+                .from('profiles')
+                .select('avatar_url, display_name')
+                .eq('id', userId)
+                .single()
+            if (data?.avatar_url) setAvatarUrl(data.avatar_url)
+        }
+        load()
+    }, [userId])
+
+    return avatarUrl ? (
+        <img src={avatarUrl} className="w-full h-full object-cover" alt="avatar" />
+    ) : (
+        <span className="text-3xl">👤</span>
+    )
+}
+
 export default function GrupoPage() {
     const router = useRouter()
     const supabase = createClient()
@@ -48,6 +71,7 @@ export default function GrupoPage() {
     const [loading, setLoading] = useState(true)
     const [loadingMatches, setLoadingMatches] = useState(false)
     const [currentUserId, setCurrentUserId] = useState<string | null>(null)
+    const [selectedRanking, setSelectedRanking] = useState<number | null>(null)
 
     useEffect(() => { loadEntries() }, [])
 
@@ -131,6 +155,16 @@ export default function GrupoPage() {
         }))
 
         setMatches(formatted)
+
+        // Obtener posición en ranking
+        const { data: rankingData } = await supabase
+            .from('rankings')
+            .select('position')
+            .eq('entry_id', entry.id)
+            .single()
+
+        setSelectedRanking(rankingData?.position ?? null)
+
         setLoadingMatches(false)
     }
 
@@ -146,6 +180,9 @@ export default function GrupoPage() {
         matchesByDate[dayStr].push(m)
     })
 
+    const verPronósticosActivo = new Date() >= new Date('2026-06-11T09:00:00Z')
+
+
     if (loading) return (
         <main className="min-h-screen bg-gray-50 flex items-center justify-center">
             <p className="text-gray-400">Cargando...</p>
@@ -155,19 +192,31 @@ export default function GrupoPage() {
     return (
         <main className="min-h-screen bg-gray-50">
             <header className="bg-white border-b border-gray-100 px-4 py-4 sticky top-0 z-10">
-            <div className="max-w-2xl mx-auto flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                <NavMenu />
-                <div>
-                    <p className="font-bold text-gray-900">Pronósticos del grupo</p>
-                    <p className="text-xs text-gray-400">Partidos terminados</p>
+                <div className="max-w-2xl mx-auto flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <NavMenu />
+                        <div>
+                            <p className="font-bold text-gray-900">Pronósticos del grupo</p>
+                            <p className="text-xs text-gray-400">Partidos terminados</p>
+                        </div>
+                    </div>
+                    <UserChip />
                 </div>
-                </div>
-                <UserChip />
-            </div>
             </header>
 
             <div className="max-w-2xl mx-auto px-4 py-6">
+
+                {!verPronósticosActivo && (
+                    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-10 text-center mb-6">
+                        <div className="text-5xl mb-4">🔒</div>
+                        <p className="font-bold text-gray-900 text-lg mb-2">Sección bloqueada</p>
+                        <p className="text-gray-400 text-sm">
+                            Los pronósticos del grupo estarán disponibles a partir del{' '}
+                            <span className="font-semibold text-gray-700">11 de junio a las 3:00 am</span>,
+                            cuando ya no sea posible modificar pronósticos.
+                        </p>
+                    </div>
+                )}
 
                 {/* Selector de quiniela */}
                 <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-6">
@@ -197,22 +246,55 @@ export default function GrupoPage() {
                     </select>
                 </div>
 
-                {/* Stats del seleccionado */}
                 {selectedEntry && !loadingMatches && matches.length > 0 && (
-                    <div className="grid grid-cols-3 gap-3 mb-6">
-                        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 text-center">
-                            <p className="text-2xl font-bold" style={{ color: '#006847' }}>{totalPoints}</p>
-                            <p className="text-xs text-gray-400 mt-1">Puntos totales</p>
+                    <>
+                        {/* Foto del usuario seleccionado */}
+                        {/* Foto del usuario seleccionado */}
+                        <div className="flex flex-col items-center mb-6">
+                            <div className="relative inline-block">
+                                <div className="w-36 h-36 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center shadow-lg"
+                                    style={{ border: '1.5px solid #e5e7eb', boxShadow: '0 8px 32px rgba(0,0,0,0.12)' }}>
+                                    {selectedEntry && <AvatarImage userId={selectedEntry.user_id} />}
+                                </div>
+                                {/* Badge de ranking */}
+                                {selectedRanking && (
+                                    <div className="absolute -top-1 -right-1 flex flex-col items-center justify-center w-12 h-12 rounded-full shadow-lg border-2 border-white"
+                                        style={{
+                                            background: selectedRanking === 1
+                                                ? 'linear-gradient(135deg, #b8860b, #ffd700, #b8860b)'
+                                                : selectedRanking === 2
+                                                    ? 'linear-gradient(135deg, #808080, #d4d4d4, #808080)'
+                                                    : selectedRanking === 3
+                                                        ? 'linear-gradient(135deg, #7c4a1e, #cd7f32, #7c4a1e)'
+                                                        : 'linear-gradient(135deg, #1a1a1a, #3a3a3a, #1a1a1a)'
+                                        }}>
+                                        <span className="text-sm">🏆</span>
+                                        <span className="text-xs font-black text-white leading-none" style={{ textShadow: '0 1px 2px rgba(0,0,0,0.4)' }}>
+                                            #{selectedRanking}
+                                        </span>
+                                    </div>
+                                )}
+                            </div>
+                            <p className="font-bold text-gray-900 text-lg mt-3">{selectedEntry?.display_name}</p>
+                            <p className="text-sm text-gray-400">{selectedEntry?.name}</p>
                         </div>
-                        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 text-center">
-                            <p className="text-2xl font-bold text-green-500">{exactScores}</p>
-                            <p className="text-xs text-gray-400 mt-1">Exactos 🎯</p>
+
+                        {/* Stats */}
+                        <div className="grid grid-cols-3 gap-3 mb-6">
+                            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 text-center">
+                                <p className="text-2xl font-bold" style={{ color: '#006847' }}>{totalPoints}</p>
+                                <p className="text-xs text-gray-400 mt-1">Puntos totales</p>
+                            </div>
+                            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 text-center">
+                                <p className="text-2xl font-bold text-green-500">{exactScores}</p>
+                                <p className="text-xs text-gray-400 mt-1">Exactos 🎯</p>
+                            </div>
+                            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 text-center">
+                                <p className="text-2xl font-bold text-blue-500">{correctResults}</p>
+                                <p className="text-xs text-gray-400 mt-1">Resultados ✓</p>
+                            </div>
                         </div>
-                        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 text-center">
-                            <p className="text-2xl font-bold text-blue-500">{correctResults}</p>
-                            <p className="text-xs text-gray-400 mt-1">Resultados ✓</p>
-                        </div>
-                    </div>
+                    </>
                 )}
 
                 {/* Loading */}
@@ -293,17 +375,17 @@ export default function GrupoPage() {
                                                 {/* Pronóstico */}
                                                 <div className="flex items-center gap-1">
                                                     <span className={`w-10 h-10 flex items-center justify-center text-lg font-bold rounded-xl ${pts === 3 ? 'bg-green-100 text-green-700' :
-                                                            pts === 1 ? 'bg-blue-100 text-blue-700' :
-                                                                pts === 0 ? 'bg-red-50 text-red-400' :
-                                                                    'bg-gray-50 text-gray-400'
+                                                        pts === 1 ? 'bg-blue-100 text-blue-700' :
+                                                            pts === 0 ? 'bg-red-50 text-red-400' :
+                                                                'bg-gray-50 text-gray-400'
                                                         }`}>
                                                         {match.predicted_home ?? '?'}
                                                     </span>
                                                     <span className="text-gray-300 font-bold">—</span>
                                                     <span className={`w-10 h-10 flex items-center justify-center text-lg font-bold rounded-xl ${pts === 3 ? 'bg-green-100 text-green-700' :
-                                                            pts === 1 ? 'bg-blue-100 text-blue-700' :
-                                                                pts === 0 ? 'bg-red-50 text-red-400' :
-                                                                    'bg-gray-50 text-gray-400'
+                                                        pts === 1 ? 'bg-blue-100 text-blue-700' :
+                                                            pts === 0 ? 'bg-red-50 text-red-400' :
+                                                                'bg-gray-50 text-gray-400'
                                                         }`}>
                                                         {match.predicted_away ?? '?'}
                                                     </span>

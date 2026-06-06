@@ -27,6 +27,7 @@ export default function LoginPage() {
   const [errors, setErrors] = useState<{ identifier?: string; password?: string; general?: string }>({})
   const [loading, setLoading] = useState(false)
   const [frase, setFrase] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
 
   useEffect(() => {
     setFrase(FRASES[Math.floor(Math.random() * FRASES.length)])
@@ -171,19 +172,24 @@ export default function LoginPage() {
                 <label className="text-sm font-semibold text-gray-700 mb-1.5 block">
                   Contraseña
                 </label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={e => { setPassword(e.target.value); setErrors({}) }}
-                  className={`w-full border-2 rounded-xl px-4 py-3 text-gray-900 outline-none transition-colors ${errors.password ? 'border-red-300 bg-red-50' : 'border-gray-100 focus:border-green-500'
-                    }`}
-                  placeholder="••••••••"
-                />
-                {errors.password && (
-                  <p className="text-red-500 text-xs mt-1.5 flex items-center gap-1">
-                    <span>⚠️</span> {errors.password}
-                  </p>
-                )}
+                <div className="relative">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={e => { setPassword(e.target.value); setErrors({}) }}
+                    className={`w-full border-2 rounded-xl px-4 py-3 pr-12 text-gray-900 outline-none transition-colors ${errors.password ? 'border-red-300 bg-red-50' : 'border-gray-100 focus:border-green-500'
+                      }`}
+                    placeholder="••••••••"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    {showPassword ? '🙈' : '👁️'}
+                  </button>
+                </div>
+                {errors.password && <p className="text-red-500 text-xs mt-1.5 flex items-center gap-1"><span>⚠️</span> {errors.password}</p>}
               </div>
 
               {errors.general && (

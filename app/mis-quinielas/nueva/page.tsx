@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '../../lib/supabase'
 import Link from 'next/link'
@@ -11,6 +11,8 @@ export default function NuevaQuinielaPage() {
   const [entriesCount, setEntriesCount] = useState<number | null>(null)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const creatingRef = useRef(false)
+  
 
   useEffect(() => { loadEntriesCount() }, [])
 
@@ -23,6 +25,8 @@ export default function NuevaQuinielaPage() {
   }
 
   async function handleCrear() {
+    if (creatingRef.current) return
+    creatingRef.current = true
     setError('')
     setLoading(true)
     const { data: { user } } = await supabase.auth.getUser()
