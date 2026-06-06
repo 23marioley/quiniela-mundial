@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '../lib/supabase'
 import Link from 'next/link'
 import NavMenu, { UserChip } from '../components/NavMenu'
+import jsPDF from 'jspdf'
+import autoTable from 'jspdf-autotable'
 
 type Team = { id: number; name: string; flag: string }
 type Match = {
@@ -65,9 +67,10 @@ export default function AdminPage() {
     const [loading, setLoading] = useState(true)
     const [isAdmin, setIsAdmin] = useState(false)
     const [users, setUsers] = useState<UserSummary[]>([])
-    const [activeTab, setActiveTab] = useState<'partidos' | 'usuarios'>('partidos')
+    const [activeTab, setActiveTab] = useState<'partidos' | 'usuarios' | 'pdf'>('partidos')
     const [loadingUsers, setLoadingUsers] = useState(false)
     const [totalRecaudado, setTotalRecaudado] = useState(0)
+    const [generatingPDF, setGeneratingPDF] = useState(false)
 
     useEffect(() => { loadData() }, [])
 
@@ -244,6 +247,132 @@ export default function AdminPage() {
         ))
     }
 
+    async function generatePDF() {
+        setGeneratingPDF(true)
+
+        // Cargar todos los partidos
+        const { data: matchesData } = await supabase
+            .from('matches')
+            .select(`
+      id, match_number, match_date, city,
+      groups!inner(name),
+      home_team:teams!matches_home_team_id_fkey(id, name, flag),
+      away_team:teams!matches_away_team_id_fkey(id, name, flag)
+    `)
+            .order('match_date', { ascending: true })
+
+        // Cargar todas las quinielas
+        const { data: entriesRaw } = await supabase
+            .from('entries')
+            .select('id, name, user_id')
+            .order('user_id')
+
+        // Cargar perfiles
+        const userIds = [...new Set(entriesRaw?.map((e: any) => e.user_id) ?? [])]
+        const { data: profilesData } = await supabase
+            .from('profiles')
+            .select('id, display_name')
+            .in('id', userIds)
+
+        const profilesMap: Record<string, string> = {}
+        profilesData?.forEach((p: any) => { profilesMap[p.id] = p.display_name })
+
+        const entriesData = entriesRaw?.map((e: any) => ({
+            id: e.id,
+            name: e.name,
+            user_id: e.user_id,
+            display_name: profilesMap[e.user_id] ?? 'Usuario'
+        }))
+
+        // Cargar todos los pronósticos
+        const { data: predsData } = await supabase
+            .from('predictions')
+            .select('entry_id, match_id, predicted_home, predicted_away')
+
+        if (!matchesData || !entriesData || !predsData) {
+            setGeneratingPDF(false)
+            return
+        }
+
+        // Mapear pronósticos
+        const predsMap: Record<string, string> = {}
+        predsData.forEach((p: any) => {
+            predsMap[`${p.entry_id}-${p.match_id}`] = `${p.predicted_home ?? '?'}-${p.predicted_away ?? '?'}`
+        })
+
+        // Formatear entradas
+        const entries = entriesData.map((e: any) => ({
+            id: e.id,
+            label: entriesData.filter((x: any) => x.user_id === e.user_id).length > 1
+                ? `${e.display_name} (${e.name})`
+                : e.display_name
+        }))
+
+        // Crear PDF
+        const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' })
+
+        // Título
+        doc.setFontSize(18)
+        doc.setTextColor(0, 104, 71)
+        doc.text('Quiniela Mundial 2026', 148, 15, { align: 'center' })
+
+        doc.setFontSize(10)
+        doc.setTextColor(100, 100, 100)
+        doc.text(`Generado el ${new Date().toLocaleDateString('es-MX', { day: '2-digit', month: 'long', year: 'numeric' })}`, 148, 22, { align: 'center' })
+        doc.text(`${entries.length} participantes · ${matchesData.length} partidos`, 148, 28, { align: 'center' })
+
+        // Tabla
+        const MONTHS = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic']
+
+        const tableData = matchesData.map((m: any) => {
+            const d = new Date(m.match_date)
+            const mty = new Date(d.getTime() - 6 * 60 * 60 * 1000)
+            const dateStr = `${mty.getUTCDate()} ${MONTHS[mty.getUTCMonth()]}`
+            const hours = mty.getUTCHours()
+            const minutes = mty.getUTCMinutes().toString().padStart(2, '0')
+            const ampm = hours >= 12 ? 'pm' : 'am'
+            const h = hours % 12 || 12
+            const timeStr = `${h}:${minutes}${ampm}`
+
+            return [
+                `${m.match_number}`,
+                `Gr. ${m.groups.name}`,
+                `${m.home_team.name} vs ${m.away_team.name}`,
+                `${dateStr} ${timeStr}`,
+                ...entries.map(e => predsMap[`${e.id}-${m.id}`] ?? '-')
+            ]
+        })
+
+        autoTable(doc, {
+            startY: 33,
+            head: [['#', 'Grupo', 'Partido', 'Fecha', ...entries.map(e => e.label)]],
+            body: tableData,
+            styles: { fontSize: 6, cellPadding: 1.5 },
+            headStyles: {
+                fillColor: [0, 104, 71],
+                textColor: 255,
+                fontSize: 6,
+                fontStyle: 'bold',
+                halign: 'center'
+            },
+            columnStyles: {
+                0: { halign: 'center', cellWidth: 8 },
+                1: { halign: 'center', cellWidth: 12 },
+                2: { cellWidth: 55 },
+                3: { halign: 'center', cellWidth: 20 },
+            },
+            alternateRowStyles: { fillColor: [248, 250, 252] },
+            didParseCell: (data) => {
+                if (data.section === 'body' && data.column.index >= 4) {
+                    data.cell.styles.halign = 'center'
+                }
+            }
+        })
+
+        doc.save('quiniela-mundial-2026.pdf')
+        setGeneratingPDF(false)
+    }
+
     // Agrupar por fecha
     const matchesByDate: Record<string, Match[]> = {}
     matches.forEach(m => {
@@ -298,6 +427,14 @@ export default function AdminPage() {
                         style={activeTab === 'usuarios' ? { backgroundColor: '#006847' } : {}}
                     >
                         👥 Usuarios
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('pdf')}
+                        className={`px-4 py-2.5 text-sm font-medium rounded-t-xl transition-colors ${activeTab === 'pdf' ? 'text-white' : 'text-gray-500 hover:text-gray-900'
+                            }`}
+                        style={activeTab === 'pdf' ? { backgroundColor: '#006847' } : {}}
+                    >
+                        📄 Generar PDF
                     </button>
                 </div>
             </div>
@@ -534,6 +671,43 @@ export default function AdminPage() {
                             </div>
                         </div>
                     )}
+                </div>
+            )}
+            {activeTab === 'pdf' && (
+                <div className="max-w-2xl mx-auto px-4 py-6">
+                    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center">
+                        <div className="text-5xl mb-4">📄</div>
+                        <h2 className="text-xl font-bold text-gray-900 mb-2">Generar PDF de transparencia</h2>
+                        <p className="text-gray-400 text-sm mb-6 max-w-sm mx-auto">
+                            Genera un PDF con todos los pronósticos de todos los participantes para compartirlo y garantizar transparencia.
+                        </p>
+
+                        <div className="bg-amber-50 border border-amber-100 rounded-xl p-4 mb-6 text-left">
+                            <p className="text-amber-700 text-sm font-semibold mb-1">⚠️ Recomendación</p>
+                            <p className="text-amber-600 text-sm">
+                                Genera y comparte este PDF cuando falten menos de 10 horas para el inicio del torneo, cuando ya nadie pueda modificar sus pronósticos.
+                            </p>
+                        </div>
+
+                        <button
+                            onClick={generatePDF}
+                            disabled={generatingPDF}
+                            className="w-full text-white font-bold py-4 rounded-2xl transition-opacity disabled:opacity-60 flex items-center justify-center gap-2 shadow-lg"
+                            style={{ background: 'linear-gradient(135deg, #006847, #004d35)' }}
+                        >
+                            {generatingPDF ? (
+                                <>
+                                    <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                                    </svg>
+                                    Generando PDF...
+                                </>
+                            ) : (
+                                '📄 Descargar PDF de pronósticos'
+                            )}
+                        </button>
+                    </div>
                 </div>
             )}
         </main>

@@ -198,7 +198,7 @@ export default function RankingsPage() {
                     <div className="text-right">
                       <p className="font-bold text-lg text-gray-900">{entry.total_points} pts</p>
                       <p className="text-xs text-gray-400">
-                        🎯 {entry.exact_scores} · ✓ {entry.correct_results}
+                        🎯 {entry.exact_scores} · ✅ {entry.correct_results}
                       </p>
                     </div>
 
