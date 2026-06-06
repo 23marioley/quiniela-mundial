@@ -177,6 +177,33 @@ export default function AdminPage() {
         ))
     }
 
+    async function handleUndo(matchId: number) {
+        const confirm = window.confirm('¿Seguro que quieres deshacer este resultado? Se borrarán los puntos de todos los pronósticos de este partido.')
+        if (!confirm) return
+
+        await supabase
+            .from('matches')
+            .update({
+                home_score: null,
+                away_score: null,
+                status: 'upcoming'
+            })
+            .eq('id', matchId)
+
+        // Limpiar puntos de todos los pronósticos de este partido
+        await supabase
+            .from('predictions')
+            .update({ points_earned: null })
+            .eq('match_id', matchId)
+
+        // Actualizar estado local
+        setMatches(ms => ms.map(m => m.id === matchId
+            ? { ...m, home_score: null, away_score: null, status: 'upcoming' }
+            : m
+        ))
+        setScores(s => ({ ...s, [matchId]: { home: '', away: '' } }))
+    }
+
     async function handleAvatarUpload(userId: string, file: File) {
         const fileExt = file.name.split('.').pop()
         const fileName = `${userId}.${fileExt}`
@@ -374,6 +401,16 @@ export default function AdminPage() {
                                                         {isSaving ? 'Guardando...' : isSaved ? '✓ Guardado' : finished ? 'Actualizar resultado' : 'Guardar resultado'}
                                                     </button>
                                                 </div>
+
+                                                {/* Botón deshacer resultado */}
+                                                {match.status === 'finished' && (
+                                                    <button
+                                                        onClick={() => handleUndo(match.id)}
+                                                        className="w-full py-2 rounded-xl text-sm font-medium text-red-400 hover:text-red-600 border border-red-100 hover:border-red-300 transition-colors mt-2"
+                                                    >
+                                                        ↩ Deshacer resultado
+                                                    </button>
+                                                )}
 
                                             </div>
                                         )

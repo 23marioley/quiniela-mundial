@@ -104,7 +104,7 @@ export default function MisQuinielasPage() {
         ) : (
           <div className="flex flex-col gap-3 mb-6">
             {entries.map((entry, i) => {
-              const torneoAbierto = new Date() < new Date('2026-06-11T09:00:00Z')
+              // const torneoAbierto = new Date() < new Date('2026-06-11T09:00:00Z')
               return (
                 <div key={entry.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:border-green-200 hover:shadow-md transition-all">
                   <Link href={`/mis-quinielas/${entry.id}`} className="p-5 flex justify-between items-center block">
