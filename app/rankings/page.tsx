@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '../lib/supabase'
 import Link from 'next/link'
-import NavMenu from '../components/NavMenu'
+import NavMenu, { UserChip } from '../components/NavMenu'
 
 type RankingEntry = {
   entry_id: number
@@ -67,7 +67,7 @@ export default function RankingsPage() {
               <p className="text-xs text-gray-400">{rankings.length} quinielas registradas</p>
             </div>
           </div>
-          <span className="text-2xl">🏆</span>
+          <UserChip />
         </div>
       </header>
 

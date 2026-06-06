@@ -12,6 +12,7 @@ export default function NavMenu() {
     const router = useRouter()
     const pathname = usePathname()
     const supabase = createClient()
+    const [profile, setProfile] = useState<{ display_name: string; avatar_url: string | null } | null>(null)
 
     useEffect(() => {
         async function checkAdmin() {
@@ -47,6 +48,20 @@ export default function NavMenu() {
             clearTimeout(timer)
             events.forEach(e => window.removeEventListener(e, resetTimer))
         }
+    }, [])
+
+    useEffect(() => {
+        async function loadProfile() {
+            const { data: { user } } = await supabase.auth.getUser()
+            if (!user) return
+            const { data } = await supabase
+                .from('profiles')
+                .select('display_name, avatar_url')
+                .eq('id', user.id)
+                .single()
+            if (data) setProfile(data)
+        }
+        loadProfile()
     }, [])
 
     async function handleLogout() {
@@ -122,4 +137,42 @@ export default function NavMenu() {
             </div>
         </>
     )
+    
+}
+
+export function UserChip() {
+  const supabase = createClient()
+  const [profile, setProfile] = useState<{ display_name: string; avatar_url: string | null } | null>(null)
+
+  useEffect(() => {
+    async function loadProfile() {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+      const { data } = await supabase
+        .from('profiles')
+        .select('display_name, avatar_url')
+        .eq('id', user.id)
+        .single()
+      if (data) setProfile(data)
+    }
+    loadProfile()
+  }, [])
+
+  if (!profile) return null
+
+  return (
+    <div className="flex items-center gap-2">
+      <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center flex-shrink-0 border-2"
+        style={{ borderColor: '#006847' }}>
+        {profile.avatar_url ? (
+          <img src={profile.avatar_url} className="w-full h-full object-cover" alt={profile.display_name} />
+        ) : (
+          <span className="text-sm">👤</span>
+        )}
+      </div>
+      <span className="text-sm font-semibold text-gray-700 hidden sm:block truncate max-w-24">
+        {profile.display_name}
+      </span>
+    </div>
+  )
 }

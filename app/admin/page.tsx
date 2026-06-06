@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '../lib/supabase'
 import Link from 'next/link'
-import NavMenu from '../components/NavMenu'
+import NavMenu, { UserChip } from '../components/NavMenu'
 
 type Team = { id: number; name: string; flag: string }
 type Match = {
@@ -250,19 +250,16 @@ export default function AdminPage() {
     return (
         <main className="min-h-screen bg-gray-50">
             <header className="bg-white border-b border-gray-100 px-4 py-4 sticky top-0 z-10">
-                <div className="max-w-2xl mx-auto flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <NavMenu />
-                        <div>
-                            <p className="font-bold text-gray-900">Panel Admin</p>
-                            <p className="text-xs text-gray-400">{totalFinished} / 72 partidos terminados</p>
-                        </div>
-                    </div>
-                    <div className="w-20 bg-gray-100 rounded-full h-2">
-                        <div className="h-2 rounded-full transition-all"
-                            style={{ width: `${(totalFinished / 72) * 100}%`, backgroundColor: '#006847' }} />
-                    </div>
+            <div className="max-w-2xl mx-auto flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                <NavMenu />
+                <div>
+                    <p className="font-bold text-gray-900">Panel Admin</p>
+                    <p className="text-xs text-gray-400">{totalFinished} / 72 partidos terminados</p>
                 </div>
+                </div>
+                <UserChip />
+            </div>
             </header>
             {/* Pestañas */}
             <div className="bg-white border-b border-gray-100">

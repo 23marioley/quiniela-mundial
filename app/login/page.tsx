@@ -8,12 +8,15 @@ import Link from 'next/link'
 const FRASES = [
   "El fútbol no se juega con los pies, se juega con el corazón. ❤️",
   "La pelota no se mancha. ⚽",
-  "En el fútbol, como en la vida, el equipo siempre gana solo. 🏆",
+  "En el fútbol, como en la vida, el equipo siempre gana unido. 🏆",
   "No hay presión, solo fútbol. 🌍",
   "El mejor momento para meter un gol es siempre. 🥅",
   "El fútbol es el deporte más hermoso del mundo. 🌟",
   "Juega bonito, vive bonito. ✨",
   "La magia del fútbol está en lo inesperado. 🎯",
+  "Al margen del resultado, ¡pártanse la madre! 💪",
+  "Solo hay dos cosas seguras en esta vida: la muerte y un penal para el América.",
+  "El fútbol es lo más importante de lo menos importante. ⚽"
 ]
 
 export default function LoginPage() {
@@ -109,9 +112,8 @@ export default function LoginPage() {
         {/* Logo y título */}
         <div className="text-center mb-8">
           <div className="relative inline-block mb-4">
-            <div className="w-20 h-20 rounded-2xl flex items-center justify-center shadow-2xl"
-              style={{ backgroundColor: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(10px)' }}>
-              <span className="text-5xl">⚽</span>
+            <div className="w-24 h-24 rounded-full overflow-hidden shadow-2xl border-4 border-white/20">
+              <img src="/trionda.png" alt="Trionda FIFA 2026" className="w-full h-full object-cover" />
             </div>
             <div className="absolute -top-1 -right-1 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white shadow"
               style={{ backgroundColor: '#dc2626' }}>

@@ -3,8 +3,9 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { createClient } from '../../lib/supabase'
-import NavMenu from '../../components/NavMenu'
+import NavMenu, { UserChip } from '../../components/NavMenu'
 import Link from 'next/link'
+
 
 type Team = { id: number; name: string; flag: string }
 type Match = {
@@ -193,11 +194,11 @@ export default function QuinielaPage() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-20 bg-gray-100 rounded-full h-2">
+            <div className="w-16 bg-gray-100 rounded-full h-2">
               <div className="h-2 rounded-full transition-all"
                 style={{ width: `${(totalFilled / 72) * 100}%`, backgroundColor: '#006847' }} />
             </div>
-            <span className="text-xs text-gray-400">{Math.round((totalFilled / 72) * 100)}%</span>
+            <UserChip />
           </div>
         </div>
       </header>

@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '../lib/supabase'
 import Link from 'next/link'
-import NavMenu from '../components/NavMenu'
+// import NavMenu from '../components/NavMenu'
+import NavMenu, { UserChip } from '../components/NavMenu'
 
 type Entry = { id: number; name: string; created_at: string; predictions_count: number }
 
@@ -55,21 +56,21 @@ export default function MisQuinielasPage() {
   )
 
   async function handleDelete(entryId: number) {
-  const confirm = window.confirm('¿Seguro que quieres eliminar esta quiniela? Se borrarán todos sus pronósticos.')
-  if (!confirm) return
+    const confirm = window.confirm('¿Seguro que quieres eliminar esta quiniela? Se borrarán todos sus pronósticos.')
+    if (!confirm) return
 
-  await supabase
-    .from('predictions')
-    .delete()
-    .eq('entry_id', entryId)
+    await supabase
+      .from('predictions')
+      .delete()
+      .eq('entry_id', entryId)
 
-  await supabase
-    .from('entries')
-    .delete()
-    .eq('id', entryId)
+    await supabase
+      .from('entries')
+      .delete()
+      .eq('id', entryId)
 
-  setEntries(prev => prev.filter(e => e.id !== entryId))
-}
+    setEntries(prev => prev.filter(e => e.id !== entryId))
+  }
 
   return (
     <main className="min-h-screen bg-gray-50">
@@ -84,9 +85,12 @@ export default function MisQuinielasPage() {
               <span className="font-bold text-gray-900">Mundial 2026</span>
             </div>
           </div>
-          <Link href="/rankings" className="text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors">
-            🏆 Rankings
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link href="/rankings" className="text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors">
+              🏆 Rankings
+            </Link>
+            <UserChip />
+          </div>
         </div>
       </header>
 

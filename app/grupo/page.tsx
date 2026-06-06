@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '../lib/supabase'
-import NavMenu from '../components/NavMenu'
+import NavMenu, { UserChip } from '../components/NavMenu'
 
 type Profile = { id: string; display_name: string }
 type Entry = { id: number; name: string; user_id: string; display_name: string }
@@ -155,16 +155,16 @@ export default function GrupoPage() {
     return (
         <main className="min-h-screen bg-gray-50">
             <header className="bg-white border-b border-gray-100 px-4 py-4 sticky top-0 z-10">
-                <div className="max-w-2xl mx-auto flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <NavMenu />
-                        <div>
-                            <p className="font-bold text-gray-900">Pronósticos del grupo</p>
-                            <p className="text-xs text-gray-400">Partidos terminados</p>
-                        </div>
-                    </div>
-                    <span className="text-2xl">👁️</span>
+            <div className="max-w-2xl mx-auto flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                <NavMenu />
+                <div>
+                    <p className="font-bold text-gray-900">Pronósticos del grupo</p>
+                    <p className="text-xs text-gray-400">Partidos terminados</p>
                 </div>
+                </div>
+                <UserChip />
+            </div>
             </header>
 
             <div className="max-w-2xl mx-auto px-4 py-6">
