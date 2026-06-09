@@ -144,7 +144,7 @@ export default function AdminPage() {
             username: p.username ?? '-',
             entries_count: entriesByUser[p.id]?.count ?? 0,
             total_predictions: entriesByUser[p.id]?.predictions ?? 0,
-            total_due: (entriesByUser[p.id]?.count ?? 0) * 200,
+            total_due: (entriesByUser[p.id]?.count ?? 0) * 350,
             avatar_url: p.avatar_url ?? null
         }))
 

@@ -15,7 +15,7 @@ export default function MisQuinielasPage() {
   const [entries, setEntries] = useState<Entry[]>([])
   const [displayName, setDisplayName] = useState('')
   const [loading, setLoading] = useState(true)
-  const PRECIO = 200
+  const PRECIO = 350
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 })
   const [entryToDelete, setEntryToDelete] = useState<number | null>(null)
 
@@ -213,7 +213,7 @@ export default function MisQuinielasPage() {
             <div>
               <p className="text-sm text-gray-500">Tu participación</p>
               <p className="font-semibold text-gray-900 mt-0.5">
-                {entries.length} {entries.length === 1 ? 'quiniela' : 'quinielas'} × $200
+                {entries.length} {entries.length === 1 ? 'quiniela' : 'quinielas'} × $350
               </p>
             </div>
             <div className="text-right">
