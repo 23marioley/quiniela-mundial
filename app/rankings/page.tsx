@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '../lib/supabase'
 import Link from 'next/link'
 import NavMenu, { UserChip } from '../components/NavMenu'
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts'
 
 type RankingEntry = {
   entry_id: number
@@ -19,12 +20,32 @@ type RankingEntry = {
   avatar_url?: string
 }
 
+type HistoryPoint = {
+  match_id: number
+  match_number: number
+  position: number
+  total_points: number
+}
+
+type EntryHistory = {
+  entry_id: number
+  user_id: string
+  display_name: string
+  entry_name: string
+  avatar_url?: string
+  color: string
+  history: HistoryPoint[]
+}
+
 export default function RankingsPage() {
   const router = useRouter()
   const supabase = createClient()
   const [rankings, setRankings] = useState<RankingEntry[]>([])
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const [histories, setHistories] = useState<EntryHistory[]>([])
+  const [selectedEntryId, setSelectedEntryId] = useState<number | null>(null)
+  const [loadingHistory, setLoadingHistory] = useState(true)
 
   useEffect(() => { loadData() }, [])
 
@@ -40,6 +61,75 @@ export default function RankingsPage() {
 
     if (data) setRankings(data)
     setLoading(false)
+
+    await loadHistory()
+
+  }
+
+  const COLORS = [
+    '#006847', '#dc2626', '#2563eb', '#d97706', '#7c3aed',
+    '#db2777', '#0891b2', '#65a30d', '#ea580c', '#6366f1',
+    '#14b8a6', '#f43f5e', '#8b5cf6', '#06b6d4', '#84cc16'
+  ]
+
+  async function loadHistory() {
+    setLoadingHistory(true)
+
+    const { data: historyData } = await supabase
+      .from('ranking_history')
+      .select('match_id, entry_id, user_id, position, total_points')
+      .order('match_id', { ascending: true })
+
+    if (!historyData || historyData.length === 0) {
+      setLoadingHistory(false)
+      return
+    }
+
+    // Agrupar por entry_id
+    const entriesMap: Record<number, HistoryPoint[]> = {}
+    historyData.forEach((h: any) => {
+      if (!entriesMap[h.entry_id]) entriesMap[h.entry_id] = []
+      entriesMap[h.entry_id].push({
+        match_id: h.match_id,
+        match_number: 0,
+        position: h.position,
+        total_points: h.total_points
+      })
+    })
+
+    // Obtener match numbers
+    const matchIds = [...new Set(historyData.map((h: any) => h.match_id))]
+    const { data: matchesData } = await supabase
+      .from('matches')
+      .select('id, match_number')
+      .in('id', matchIds)
+
+    const matchNumberMap: Record<number, number> = {}
+    matchesData?.forEach((m: any) => { matchNumberMap[m.id] = m.match_number })
+
+    // Actualizar match_number en history
+    Object.values(entriesMap).forEach(points => {
+      points.forEach(p => { p.match_number = matchNumberMap[p.match_id] ?? 0 })
+      points.sort((a, b) => a.match_number - b.match_number)
+    })
+
+    // Combinar con rankings para obtener nombres y avatars
+    const { data: rankingsData } = await supabase
+      .from('rankings')
+      .select('entry_id, user_id, display_name, entry_name, avatar_url')
+
+    const formatted: EntryHistory[] = (rankingsData ?? []).map((r: any, index: number) => ({
+      entry_id: r.entry_id,
+      user_id: r.user_id,
+      display_name: r.display_name,
+      entry_name: r.entry_name,
+      avatar_url: r.avatar_url,
+      color: COLORS[index % COLORS.length],
+      history: entriesMap[r.entry_id] ?? []
+    })).filter(e => e.history.length > 0)
+
+    setHistories(formatted)
+    setLoadingHistory(false)
   }
 
   function getMedal(position: number) {
@@ -215,6 +305,150 @@ export default function RankingsPage() {
             🎯 Marcador exacto = 3 pts &nbsp;·&nbsp; ✅ Resultado correcto = 1 pt
           </p>
         </div>
+
+        {/* Gráfica de progreso */}
+        {!loadingHistory && histories.length > 0 && (
+          <div className="mt-6 bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="font-bold text-gray-900">Progreso por partido</h2>
+                <p className="text-xs text-gray-400 mt-0.5">Posición en el ranking tras cada partido jugado</p>
+              </div>
+              <select
+                onChange={e => setSelectedEntryId(e.target.value ? parseInt(e.target.value) : null)}
+                className="text-sm border border-gray-200 rounded-xl px-3 py-2 text-gray-700 outline-none focus:ring-2 focus:ring-green-500 bg-white"
+              >
+                <option value="">Todos</option>
+                {histories.map(h => (
+                  <option key={h.entry_id} value={h.entry_id}>
+                    {h.display_name}{histories.filter(x => x.user_id === h.user_id).length > 1 ? ` (${h.entry_name})` : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Leyenda */}
+            <div className="flex flex-wrap gap-2 mb-4">
+              {histories.map(h => {
+                const isSelected = selectedEntryId === null || selectedEntryId === h.entry_id
+                return (
+                  <button
+                    key={h.entry_id}
+                    onClick={() => setSelectedEntryId(selectedEntryId === h.entry_id ? null : h.entry_id)}
+                    className="flex items-center gap-1.5 px-2 py-1 rounded-full border transition-all text-xs font-medium"
+                    style={{
+                      borderColor: isSelected ? h.color : '#e5e7eb',
+                      backgroundColor: isSelected ? h.color + '15' : 'transparent',
+                      color: isSelected ? h.color : '#9ca3af',
+                      opacity: isSelected ? 1 : 0.4
+                    }}
+                  >
+                    {h.avatar_url ? (
+                      <img src={h.avatar_url} className="w-4 h-4 rounded-full object-cover" />
+                    ) : (
+                      <span className="w-4 h-4 rounded-full flex items-center justify-center text-white text-xs"
+                        style={{ backgroundColor: h.color }}>
+                        {h.display_name[0]}
+                      </span>
+                    )}
+                    {h.display_name}
+                  </button>
+                )
+              })}
+            </div>
+
+            {/* Chart */}
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart margin={{ top: 10, right: 20, left: 0, bottom: 10 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                <XAxis
+                  dataKey="match_number"
+                  type="number"
+                  domain={[1, 72]}
+                  tickCount={9}
+                  label={{ value: 'Partido', position: 'insideBottom', offset: -5, fontSize: 11, fill: '#9ca3af' }}
+                  tick={{ fontSize: 10, fill: '#9ca3af' }}
+                />
+                <YAxis
+                  reversed
+                  tickCount={histories.length + 1}
+                  domain={[1, histories.length]}
+                  label={{ value: 'Posición', angle: -90, position: 'insideLeft', offset: 10, fontSize: 11, fill: '#9ca3af' }}
+                  tick={{ fontSize: 10, fill: '#9ca3af' }}
+                />
+                <Tooltip
+                  content={({ active, payload }) => {
+                    if (!active || !payload?.length) return null
+                    return (
+                      <div className="bg-white border border-gray-100 rounded-xl shadow-lg p-3 text-xs">
+                        <p className="font-semibold text-gray-700 mb-2">Partido #{payload[0]?.payload?.match_number}</p>
+                        {payload.map((p: any) => (
+                          <div key={`${p.dataKey}-${p.name}`} className="flex items-center gap-2 mb-1">
+                            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: p.color }} />
+                            <span className="text-gray-600">{p.name}:</span>
+                            <span className="font-bold" style={{ color: p.color }}>#{p.value}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )
+                  }}
+                />
+                {histories.map(h => {
+                  const isSelected = selectedEntryId === null || selectedEntryId === h.entry_id
+                  return (
+                    <Line
+                      key={h.entry_id}
+                      data={h.history}
+                      type="monotone"
+                      dataKey="position"
+                      name={h.display_name}
+                      stroke={h.color}
+                      strokeWidth={isSelected ? (selectedEntryId === h.entry_id ? 3 : 1.5) : 0.5}
+                      dot={false}
+                      activeDot={{ r: 5, fill: h.color }}
+                      opacity={isSelected ? 1 : 0.2}
+                      connectNulls
+                    />
+                  )
+                })}
+              </LineChart>
+            </ResponsiveContainer>
+
+            {/* Avatars al final de cada línea */}
+            <div className="flex flex-wrap justify-center gap-3 mt-4">
+              {histories
+                .filter(h => selectedEntryId === null || selectedEntryId === h.entry_id)
+                .sort((a, b) => {
+                  const lastA = a.history[a.history.length - 1]?.position ?? 99
+                  const lastB = b.history[b.history.length - 1]?.position ?? 99
+                  return lastA - lastB
+                })
+                .map(h => {
+                  const last = h.history[h.history.length - 1]
+                  if (!last) return null
+                  return (
+                    <div key={h.entry_id} className="flex items-center gap-2">
+                      <div className="w-7 h-7 rounded-full overflow-hidden border-2 flex items-center justify-center"
+                        style={{ borderColor: h.color }}>
+                        {h.avatar_url ? (
+                          <img src={h.avatar_url} className="w-full h-full object-cover" />
+                        ) : (
+                          <span className="text-xs font-bold text-white w-full h-full flex items-center justify-center"
+                            style={{ backgroundColor: h.color }}>
+                            {h.display_name[0]}
+                          </span>
+                        )}
+                      </div>
+                      <div>
+                        <p className="text-xs font-semibold text-gray-700">{h.display_name}</p>
+                        <p className="text-xs" style={{ color: h.color }}>#{last.position} · {last.total_points} pts</p>
+                      </div>
+                    </div>
+                  )
+                })}
+            </div>
+          </div>
+        )}
 
       </div>
     </main>

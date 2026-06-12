@@ -285,9 +285,27 @@ export default function AdminPage() {
         }))
 
         // Cargar todos los pronósticos
-        const { data: predsData } = await supabase
-            .from('predictions')
-            .select('entry_id, match_id, predicted_home, predicted_away')
+        // const { data: predsData } = await supabase
+        //     .from('predictions')
+        //     .select('entry_id, match_id, predicted_home, predicted_away')
+        //     .limit(2000)
+
+        // Cargar todos los pronósticos en múltiples páginas
+        let predsData: any[] = []
+        let from = 0
+        const pageSize = 500
+
+        while (true) {
+            const { data: page } = await supabase
+                .from('predictions')
+                .select('entry_id, match_id, predicted_home, predicted_away')
+                .range(from, from + pageSize - 1)
+
+            if (!page || page.length === 0) break
+            predsData = [...predsData, ...page]
+            if (page.length < pageSize) break
+            from += pageSize
+        }
 
         if (!matchesData || !entriesData || !predsData) {
             setGeneratingPDF(false)
@@ -307,6 +325,12 @@ export default function AdminPage() {
                 ? `${e.display_name} (${e.name})`
                 : e.display_name
         }))
+
+        console.log('Total predicciones cargadas:', predsData.length)
+        console.log('Entry IDs:', entries.map(e => e.id))
+        console.log('Prediccion entry 48 match 1:', predsMap['48-1'])
+        console.log('Prediccion entry 49 match 1:', predsMap['49-1'])
+        console.log('Muestra predsData entry 48:', predsData.filter((p: any) => p.entry_id === 48).slice(0, 3))
 
         // Crear PDF
         const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' })
@@ -358,7 +382,7 @@ export default function AdminPage() {
             columnStyles: {
                 0: { halign: 'center', cellWidth: 8 },
                 1: { halign: 'center', cellWidth: 12 },
-                2: { cellWidth: 55 },
+                2: { cellWidth: 35 },
                 3: { halign: 'center', cellWidth: 20 },
             },
             alternateRowStyles: { fillColor: [248, 250, 252] },
