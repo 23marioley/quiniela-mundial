@@ -429,13 +429,21 @@ export default function RankingsPage() {
                     return (
                       <div className="bg-white border border-gray-100 rounded-xl shadow-lg p-3 text-xs">
                         <p className="font-semibold text-gray-700 mb-2">Partido #{payload[0]?.payload?.match_number}</p>
-                        {[...payload].sort((a: any, b: any) => (a.value ?? 0) - (b.value ?? 0)).map((p: any) => (
-                          <div key={`${p.dataKey}-${p.name}`} className="flex items-center gap-2 mb-1">
-                            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: p.color }} />
-                            <span className="text-gray-600">{p.name}:</span>
-                            <span className="font-bold" style={{ color: p.color }}>#{p.value}</span>
-                          </div>
-                        ))}
+                        {[...payload]
+                          .filter((p: any) => {
+                            if (selectedIds.length === 0) return true
+                            const entry = histories.find(h => h.display_name === p.name)
+                            return entry ? selectedIds.includes(entry.entry_id) : true
+                          })
+                          .sort((a: any, b: any) => (a.value ?? 0) - (b.value ?? 0))
+                          .map((p: any) => (
+                            <div key={`${p.dataKey}-${p.name}`} className="flex items-center gap-2 mb-1">
+                              <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: p.color }} />
+                              <span className="text-gray-600 flex-1">{p.name}:</span>
+                              <span className="font-bold" style={{ color: p.color }}>#{p.value}</span>
+                              <span className="text-gray-400 ml-1">{p.payload?.total_points ?? 0} pts</span>
+                            </div>
+                          ))}
                       </div>
                     )
                   }}
@@ -452,7 +460,7 @@ export default function RankingsPage() {
                       stroke={h.color}
                       strokeWidth={isSelected ? (selectedIds.includes(h.entry_id) ? 3 : 1.5) : 0.5}
                       dot={false}
-                      activeDot={{ r: 5, fill: h.color }}
+                      activeDot={isSelected ? { r: 5, fill: h.color } : false}
                       opacity={isSelected ? 1 : 0.2}
                       connectNulls
                     />
@@ -462,7 +470,7 @@ export default function RankingsPage() {
             </ResponsiveContainer>
 
             {/* Avatars al final de cada línea */}
-            <div className="flex flex-wrap justify-center gap-3 mt-4">
+            {/* <div className="flex flex-wrap justify-center gap-3 mt-4">
               {histories
                 .filter(h => selectedIds.length === 0 || selectedIds.includes(h.entry_id))
                 .sort((a, b) => {
@@ -493,7 +501,7 @@ export default function RankingsPage() {
                     </div>
                   )
                 })}
-            </div>
+            </div> */}
           </div>
         )}
 
