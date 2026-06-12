@@ -44,9 +44,28 @@ export default function RankingsPage() {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [histories, setHistories] = useState<EntryHistory[]>([])
-  const [selectedEntryId, setSelectedEntryId] = useState<number | null>(null)
   const [loadingHistory, setLoadingHistory] = useState(true)
+  const [selectedIds, setSelectedIds] = useState<number[]>([])
+  const [xWindow, setXWindow] = useState({ start: 1, end: 10 })
+  const maxMatch = Math.max(...histories.flatMap(h => h.history.map(p => p.match_number)), 10)
+  const windowSize = 10
+  const canGoLeft = xWindow.start > 1
+  const canGoRight = xWindow.end < maxMatch
 
+  function toggleEntry(id: number) {
+    setSelectedIds(prev =>
+      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    )
+  }
+
+  function shiftWindow(dir: 'left' | 'right') {
+    setXWindow(w => {
+      const delta = dir === 'right' ? windowSize : -windowSize
+      const newStart = Math.max(1, Math.min(maxMatch - windowSize + 1, w.start + delta))
+      const newEnd = newStart + windowSize - 1
+      return { start: newStart, end: newEnd }
+    })
+  }
   useEffect(() => { loadData() }, [])
 
   async function loadData() {
@@ -66,10 +85,28 @@ export default function RankingsPage() {
 
   }
 
+  // const COLORS = [
+  //   '#006847', '#dc2626', '#2563eb', '#d97706', '#7c3aed',
+  //   '#db2777', '#0891b2', '#65a30d', '#ea580c', '#6366f1',
+  //   '#14b8a6', '#f43f5e', '#8b5cf6', '#06b6d4', '#84cc16'
+  // ]
+
   const COLORS = [
-    '#006847', '#dc2626', '#2563eb', '#d97706', '#7c3aed',
-    '#db2777', '#0891b2', '#65a30d', '#ea580c', '#6366f1',
-    '#14b8a6', '#f43f5e', '#8b5cf6', '#06b6d4', '#84cc16'
+    '#006847', // verde FIFA
+    '#dc2626', // rojo
+    '#f59e0b', // amarillo ámbar
+    '#2563eb', // azul
+    '#db2777', // rosa fuerte
+    '#7c3aed', // morado
+    '#ea580c', // naranja
+    '#0d9488', // teal
+    '#84cc16', // verde lima
+    '#be185d', // magenta oscuro
+    '#0369a1', // azul marino
+    '#b45309', // café dorado
+    '#15803d', // verde bosque
+    '#7e22ce', // violeta oscuro
+    '#e11d48', // rojo rosado
   ]
 
   async function loadHistory() {
@@ -309,32 +346,21 @@ export default function RankingsPage() {
         {/* Gráfica de progreso */}
         {!loadingHistory && histories.length > 0 && (
           <div className="mt-6 bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h2 className="font-bold text-gray-900">Progreso por partido</h2>
-                <p className="text-xs text-gray-400 mt-0.5">Posición en el ranking tras cada partido jugado</p>
-              </div>
-              <select
-                onChange={e => setSelectedEntryId(e.target.value ? parseInt(e.target.value) : null)}
-                className="text-sm border border-gray-200 rounded-xl px-3 py-2 text-gray-700 outline-none focus:ring-2 focus:ring-green-500 bg-white"
-              >
-                <option value="">Todos</option>
-                {histories.map(h => (
-                  <option key={h.entry_id} value={h.entry_id}>
-                    {h.display_name}{histories.filter(x => x.user_id === h.user_id).length > 1 ? ` (${h.entry_name})` : ''}
-                  </option>
-                ))}
-              </select>
+            <div className="mb-4">
+              <h2 className="font-bold text-gray-900">Progreso por partido</h2>
+              <p className="text-xs text-gray-400 mt-0.5">
+                {selectedIds.length === 0 ? 'Mostrando todos — toca un nombre para filtrar' : `${selectedIds.length} seleccionado${selectedIds.length > 1 ? 's' : ''} — toca para quitar`}
+              </p>
             </div>
 
             {/* Leyenda */}
             <div className="flex flex-wrap gap-2 mb-4">
               {histories.map(h => {
-                const isSelected = selectedEntryId === null || selectedEntryId === h.entry_id
+                const isSelected = selectedIds.length === 0 || selectedIds.includes(h.entry_id)
                 return (
                   <button
                     key={h.entry_id}
-                    onClick={() => setSelectedEntryId(selectedEntryId === h.entry_id ? null : h.entry_id)}
+                    onClick={() => toggleEntry(h.entry_id)}
                     className="flex items-center gap-1.5 px-2 py-1 rounded-full border transition-all text-xs font-medium"
                     style={{
                       borderColor: isSelected ? h.color : '#e5e7eb',
@@ -357,6 +383,27 @@ export default function RankingsPage() {
               })}
             </div>
 
+            {/* Navegación ventana */}
+            <div className="flex items-center justify-between mb-3">
+              <button
+                onClick={() => shiftWindow('left')}
+                disabled={!canGoLeft}
+                className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-sm font-semibold border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              >
+                ← Anterior
+              </button>
+              <span className="text-xs text-gray-400 font-medium">
+                Partidos {xWindow.start}–{Math.min(xWindow.end, maxMatch)} de {maxMatch}
+              </span>
+              <button
+                onClick={() => shiftWindow('right')}
+                disabled={!canGoRight}
+                className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-sm font-semibold border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              >
+                Siguiente →
+              </button>
+            </div>
+
             {/* Chart */}
             <ResponsiveContainer width="100%" height={300}>
               <LineChart margin={{ top: 10, right: 20, left: 0, bottom: 10 }}>
@@ -364,8 +411,8 @@ export default function RankingsPage() {
                 <XAxis
                   dataKey="match_number"
                   type="number"
-                  domain={[1, 72]}
-                  tickCount={9}
+                  domain={[xWindow.start, xWindow.end]}
+                  tickCount={windowSize}
                   label={{ value: 'Partido', position: 'insideBottom', offset: -5, fontSize: 11, fill: '#9ca3af' }}
                   tick={{ fontSize: 10, fill: '#9ca3af' }}
                 />
@@ -382,7 +429,7 @@ export default function RankingsPage() {
                     return (
                       <div className="bg-white border border-gray-100 rounded-xl shadow-lg p-3 text-xs">
                         <p className="font-semibold text-gray-700 mb-2">Partido #{payload[0]?.payload?.match_number}</p>
-                        {payload.map((p: any) => (
+                        {[...payload].sort((a: any, b: any) => (a.value ?? 0) - (b.value ?? 0)).map((p: any) => (
                           <div key={`${p.dataKey}-${p.name}`} className="flex items-center gap-2 mb-1">
                             <div className="w-2 h-2 rounded-full" style={{ backgroundColor: p.color }} />
                             <span className="text-gray-600">{p.name}:</span>
@@ -394,7 +441,7 @@ export default function RankingsPage() {
                   }}
                 />
                 {histories.map(h => {
-                  const isSelected = selectedEntryId === null || selectedEntryId === h.entry_id
+                  const isSelected = selectedIds.length === 0 || selectedIds.includes(h.entry_id)
                   return (
                     <Line
                       key={h.entry_id}
@@ -403,7 +450,7 @@ export default function RankingsPage() {
                       dataKey="position"
                       name={h.display_name}
                       stroke={h.color}
-                      strokeWidth={isSelected ? (selectedEntryId === h.entry_id ? 3 : 1.5) : 0.5}
+                      strokeWidth={isSelected ? (selectedIds.includes(h.entry_id) ? 3 : 1.5) : 0.5}
                       dot={false}
                       activeDot={{ r: 5, fill: h.color }}
                       opacity={isSelected ? 1 : 0.2}
@@ -417,7 +464,7 @@ export default function RankingsPage() {
             {/* Avatars al final de cada línea */}
             <div className="flex flex-wrap justify-center gap-3 mt-4">
               {histories
-                .filter(h => selectedEntryId === null || selectedEntryId === h.entry_id)
+                .filter(h => selectedIds.length === 0 || selectedIds.includes(h.entry_id))
                 .sort((a, b) => {
                   const lastA = a.history[a.history.length - 1]?.position ?? 99
                   const lastB = b.history[b.history.length - 1]?.position ?? 99
