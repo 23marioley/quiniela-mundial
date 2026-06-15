@@ -67,10 +67,13 @@ export default function AdminPage() {
     const [loading, setLoading] = useState(true)
     const [isAdmin, setIsAdmin] = useState(false)
     const [users, setUsers] = useState<UserSummary[]>([])
-    const [activeTab, setActiveTab] = useState<'partidos' | 'usuarios' | 'pdf'>('partidos')
+    const [activeTab, setActiveTab] = useState<'partidos' | 'usuarios' | 'pdf' | 'sesiones'>('partidos')
     const [loadingUsers, setLoadingUsers] = useState(false)
     const [totalRecaudado, setTotalRecaudado] = useState(0)
-    const [generatingPDF, setGeneratingPDF] = useState(false)
+const [generatingPDF, setGeneratingPDF] = useState(false)
+    const [sessions, setSessions] = useState<any[]>([])
+    const [loadingSessions, setLoadingSessions] = useState(false)
+    const [sessionDate, setSessionDate] = useState(() => new Date().toISOString().split('T')[0])
 
     useEffect(() => { loadData() }, [])
 
@@ -118,8 +121,24 @@ export default function AdminPage() {
         setLoading(false)
     }
 
+async function loadSessions(date: string) {
+        setLoadingSessions(true)
+        const from = `${date}T00:00:00.000Z`
+        const to = `${date}T23:59:59.999Z`
+
+        const { data } = await supabase
+            .from('login_sessions')
+            .select('*')
+            .gte('created_at', from)
+            .lte('created_at', to)
+            .order('created_at', { ascending: false })
+
+        setSessions(data ?? [])
+        setLoadingSessions(false)
+    }
+
     async function loadUsers() {
-        setLoadingUsers(true)
+                setLoadingUsers(true)
 
         const { data: profiles } = await supabase
             .from('profiles')
@@ -453,6 +472,13 @@ export default function AdminPage() {
                         👥 Usuarios
                     </button>
                     <button
+                        onClick={() => { setActiveTab('sesiones'); loadSessions(sessionDate) }}
+                        className={`px-4 py-2.5 text-sm font-medium rounded-t-xl transition-colors ${activeTab === 'sesiones' ? 'text-white' : 'text-gray-500 hover:text-gray-900'}`}
+                        style={activeTab === 'sesiones' ? { backgroundColor: '#006847' } : {}}
+                    >
+                        👁️ Sesiones
+                    </button>
+                    <button
                         onClick={() => setActiveTab('pdf')}
                         className={`px-4 py-2.5 text-sm font-medium rounded-t-xl transition-colors ${activeTab === 'pdf' ? 'text-white' : 'text-gray-500 hover:text-gray-900'
                             }`}
@@ -697,8 +723,60 @@ export default function AdminPage() {
                     )}
                 </div>
             )}
-            {activeTab === 'pdf' && (
+{activeTab === 'sesiones' && (
                 <div className="max-w-2xl mx-auto px-4 py-6">
+                    {/* Filtro por fecha */}
+                    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 mb-6 flex items-center gap-3">
+                        <span className="text-sm text-gray-500 font-medium">📅 Fecha:</span>
+                        <input
+                            type="date"
+                            value={sessionDate}
+                            onChange={e => { setSessionDate(e.target.value); loadSessions(e.target.value) }}
+                            className="border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700 outline-none"
+                        />
+                        <span className="text-xs text-gray-400 ml-auto">{sessions.length} sesiones</span>
+                    </div>
+
+                    {loadingSessions ? (
+                        <p className="text-center text-gray-400 py-10">Cargando sesiones...</p>
+                    ) : sessions.length === 0 ? (
+                        <p className="text-center text-gray-400 py-10">Sin sesiones ese día</p>
+                    ) : (
+                        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                            <div className="divide-y divide-gray-50">
+                                {sessions.map((s: any) => {
+                                    const mty = new Date(new Date(s.created_at).getTime() - 6 * 60 * 60 * 1000)
+                                    const hours = mty.getUTCHours()
+                                    const minutes = mty.getUTCMinutes().toString().padStart(2, '0')
+                                    const ampm = hours >= 12 ? 'pm' : 'am'
+                                    const h = hours % 12 || 12
+                                    return (
+                                        <div key={s.id} className="px-5 py-4 flex items-center gap-3">
+                                            <div className="w-9 h-9 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center flex-shrink-0">
+                                                {s.avatar_url ? (
+                                                    <img src={s.avatar_url} className="w-full h-full object-cover" alt={s.display_name} />
+                                                ) : (
+                                                    <span className="text-base">👤</span>
+                                                )}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="font-semibold text-gray-900 text-sm">{s.display_name}</p>
+                                                <p className="text-xs text-gray-400">@{s.username} · {s.device_type} · {s.ip}</p>
+                                            </div>
+                                            <div className="text-right flex-shrink-0">
+                                                <p className="text-sm font-bold text-gray-700">{h}:{minutes} {ampm}</p>
+                                            </div>
+                                        </div>
+                                    )
+                                })}
+                            </div>
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {activeTab === 'pdf' && (
+                                <div className="max-w-2xl mx-auto px-4 py-6">
                     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center">
                         <div className="text-5xl mb-4">📄</div>
                         <h2 className="text-xl font-bold text-gray-900 mb-2">Generar PDF de transparencia</h2>

@@ -45,12 +45,18 @@ export default function RankingsPage() {
   const [loading, setLoading] = useState(true)
   const [histories, setHistories] = useState<EntryHistory[]>([])
   const [loadingHistory, setLoadingHistory] = useState(true)
+  const [lastMatchPoints, setLastMatchPoints] = useState<Record<number, number>>({})
   const [selectedIds, setSelectedIds] = useState<number[]>([])
   const [xWindow, setXWindow] = useState({ start: 1, end: 10 })
+  const [fullView, setFullView] = useState(true)
   const maxMatch = Math.max(...histories.flatMap(h => h.history.map(p => p.match_number)), 10)
   const windowSize = 10
-  const canGoLeft = xWindow.start > 1
-  const canGoRight = xWindow.end < maxMatch
+  const canGoLeft = !fullView && xWindow.start > 1
+  const canGoRight = !fullView && xWindow.start + windowSize <= maxMatch
+    const xDomain = fullView ? [1, maxMatch] : [xWindow.start, xWindow.end]
+  const xTicks = fullView
+    ? Array.from({ length: maxMatch }, (_, i) => i + 1)
+    : Array.from({ length: xWindow.end - xWindow.start + 1 }, (_, i) => xWindow.start + i)
 
   function toggleEntry(id: number) {
     setSelectedIds(prev =>
@@ -61,7 +67,7 @@ export default function RankingsPage() {
   function shiftWindow(dir: 'left' | 'right') {
     setXWindow(w => {
       const delta = dir === 'right' ? windowSize : -windowSize
-      const newStart = Math.max(1, Math.min(maxMatch - windowSize + 1, w.start + delta))
+      const newStart = Math.max(1, w.start + delta)
       const newEnd = newStart + windowSize - 1
       return { start: newStart, end: newEnd }
     })
@@ -83,6 +89,24 @@ export default function RankingsPage() {
 
     await loadHistory()
 
+    const { data: lastMatch } = await supabase
+      .from('matches')
+      .select('id')
+      .eq('status', 'finished')
+      .order('match_number', { ascending: false })
+      .limit(1)
+      .single()
+
+    if (lastMatch) {
+      const { data: pts } = await supabase
+        .from('predictions')
+        .select('entry_id, points_earned')
+        .eq('match_id', lastMatch.id)
+
+      const map: Record<number, number> = {}
+      pts?.forEach((p: any) => { map[p.entry_id] = p.points_earned ?? 0 })
+      setLastMatchPoints(map)
+    }
   }
 
   // const COLORS = [
@@ -289,7 +313,8 @@ export default function RankingsPage() {
 
                 return (
                   <div key={entry.entry_id}
-                    className={`px-5 py-4 flex items-center gap-4 ${isMe ? 'bg-green-50' : ''}`}>
+                    onClick={() => router.push(`/grupo?entry=${entry.entry_id}`)}
+                    className={`px-5 py-4 flex items-center gap-4 cursor-pointer hover:bg-gray-50 transition-colors ${isMe ? 'bg-green-50 hover:bg-green-100' : ''}`}>
 
                     {/* Posición */}
                     <div className="w-8 text-center">
@@ -322,11 +347,21 @@ export default function RankingsPage() {
                     </div>
 
                     {/* Stats */}
-                    <div className="text-right">
-                      <p className="font-bold text-lg text-gray-900">{entry.total_points} pts</p>
-                      <p className="text-xs text-gray-400">
-                        🎯 {entry.exact_scores} · ✅ {entry.correct_results}
-                      </p>
+                    <div className="text-right flex items-center gap-2 justify-end">
+                      {entry.entry_id in lastMatchPoints && (
+                        <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full ${lastMatchPoints[entry.entry_id] === 3 ? 'bg-green-100 text-green-700' :
+                            lastMatchPoints[entry.entry_id] === 1 ? 'bg-blue-100 text-blue-700' :
+                              'bg-gray-100 text-gray-400'
+                          }`}>
+                          +{lastMatchPoints[entry.entry_id]}
+                        </span>
+                      )}
+                      <div>
+                        <p className="font-bold text-lg text-gray-900">{entry.total_points} pts</p>
+                        <p className="text-xs text-gray-400">
+                          🎯 {entry.exact_scores} · ✅ {entry.correct_results}
+                        </p>
+                      </div>
                     </div>
 
                   </div>
@@ -383,24 +418,39 @@ export default function RankingsPage() {
               })}
             </div>
 
-            {/* Navegación ventana */}
-            <div className="flex items-center justify-between mb-3">
+            {/* Controles navegación */}
+            <div className="flex items-center justify-between mb-3 gap-2">
+              {!fullView ? (
+                <>
+                  <button
+                    onClick={() => shiftWindow('left')}
+                    disabled={!canGoLeft}
+                    className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-sm font-semibold border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                  >
+                    ← Anterior
+                  </button>
+                  <span className="text-xs text-gray-400 font-medium">
+                    Partidos {xWindow.start}–{Math.min(xWindow.end, maxMatch)} de {maxMatch}
+                  </span>
+                  <button
+                    onClick={() => shiftWindow('right')}
+                    disabled={!canGoRight}
+                    className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-sm font-semibold border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                  >
+                    Siguiente →
+                  </button>
+                </>
+              ) : (
+                <span className="text-xs text-gray-400 font-medium">
+                  Todos los partidos (1–{maxMatch})
+                </span>
+              )}
               <button
-                onClick={() => shiftWindow('left')}
-                disabled={!canGoLeft}
-                className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-sm font-semibold border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                onClick={() => { setFullView(v => !v); setXWindow({ start: 1, end: 10 }) }}
+                className="flex-shrink-0 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-colors text-white"
+                style={{ backgroundColor: '#006847', borderColor: '#006847' }}
               >
-                ← Anterior
-              </button>
-              <span className="text-xs text-gray-400 font-medium">
-                Partidos {xWindow.start}–{Math.min(xWindow.end, maxMatch)} de {maxMatch}
-              </span>
-              <button
-                onClick={() => shiftWindow('right')}
-                disabled={!canGoRight}
-                className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-sm font-semibold border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-              >
-                Siguiente →
+                {fullView ? '🔍 Vista parcial' : '🌐 Vista completa'}
               </button>
             </div>
 
@@ -411,17 +461,20 @@ export default function RankingsPage() {
                 <XAxis
                   dataKey="match_number"
                   type="number"
-                  domain={[xWindow.start, xWindow.end]}
-                  tickCount={windowSize}
+                  domain={xDomain}
+                  ticks={xTicks}
                   label={{ value: 'Partido', position: 'insideBottom', offset: -5, fontSize: 11, fill: '#9ca3af' }}
                   tick={{ fontSize: 10, fill: '#9ca3af' }}
                 />
                 <YAxis
                   reversed
-                  tickCount={histories.length + 1}
-                  domain={[1, histories.length]}
+                  allowDecimals={false}
+                  ticks={Array.from({ length: histories.length }, (_, i) => i + 1)}
+                  domain={[0.5, histories.length + 0.5]}
+                  interval={0}
                   label={{ value: 'Posición', angle: -90, position: 'insideLeft', offset: 10, fontSize: 11, fill: '#9ca3af' }}
                   tick={{ fontSize: 10, fill: '#9ca3af' }}
+
                 />
                 <Tooltip
                   content={({ active, payload }) => {
@@ -450,10 +503,13 @@ export default function RankingsPage() {
                 />
                 {histories.map(h => {
                   const isSelected = selectedIds.length === 0 || selectedIds.includes(h.entry_id)
+                  const visibleData = fullView
+                    ? h.history
+                    : h.history.filter(p => p.match_number >= xWindow.start && p.match_number <= xWindow.end)
                   return (
                     <Line
                       key={h.entry_id}
-                      data={h.history}
+                      data={visibleData}
                       type="monotone"
                       dataKey="position"
                       name={h.display_name}

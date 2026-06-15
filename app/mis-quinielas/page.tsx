@@ -17,8 +17,8 @@ export default function MisQuinielasPage() {
   const [loading, setLoading] = useState(true)
   const PRECIO = 350
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 })
-  const [entryToDelete, setEntryToDelete] = useState<number | null>(null)
-
+const [entryToDelete, setEntryToDelete] = useState<number | null>(null)
+  const [totalAcumulado, setTotalAcumulado] = useState(0)
   useEffect(() => { loadData() }, [])
 
   async function loadData() {
@@ -41,6 +41,11 @@ export default function MisQuinielasPage() {
         predictions_count: e.predictions?.[0]?.count ?? 0
       })))
     }
+    const { count } = await supabase
+      .from('rankings')
+      .select('entry_id', { count: 'exact', head: true })
+    setTotalAcumulado((count ?? 0) * 350)
+
     setLoading(false)
   }
 
@@ -206,6 +211,17 @@ export default function MisQuinielasPage() {
             🔒 El torneo ya comenzó
           </div>
         )}
+
+        {/* Banner dinero acumulado */}
+        <div className="rounded-2xl p-5 mb-2 text-center"
+          style={{ background: 'linear-gradient(135deg, #006847, #004d35)' }}>
+          <p className="text-green-200 text-sm font-medium tracking-wide mb-1">🏆 La victoria te espera {displayName}</p>
+          <p className="text-white text-xs mb-3 opacity-80">Dinero acumulado:</p>
+          <p className="text-5xl font-black text-white mb-1">${totalAcumulado.toLocaleString('es-MX')}</p>
+          <p className="text-green-300 text-xs opacity-70">pesos</p>
+        </div>
+
+        {/* Botón agregar */}
 
         {/* Resumen de pago */}
         {entries.length > 0 && (

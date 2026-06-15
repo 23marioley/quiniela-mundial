@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '../lib/supabase'
 import NavMenu, { UserChip } from '../components/NavMenu'
 
@@ -72,6 +72,7 @@ export default function GrupoPage() {
     const [loadingMatches, setLoadingMatches] = useState(false)
     const [currentUserId, setCurrentUserId] = useState<string | null>(null)
     const [selectedRanking, setSelectedRanking] = useState<number | null>(null)
+    const searchParams = useSearchParams()
 
     useEffect(() => { loadEntries() }, [])
 
@@ -108,6 +109,12 @@ export default function GrupoPage() {
 
         setEntries(formatted)
         setLoading(false)
+
+        const entryParam = searchParams.get('entry')
+        if (entryParam) {
+            const entry = formatted.find(e => e.id === parseInt(entryParam))
+            if (entry) loadMatchesForEntry(entry)
+        }
     }
 
     async function loadMatchesForEntry(entry: Entry) {
@@ -228,7 +235,7 @@ export default function GrupoPage() {
                             const entry = entries.find(en => en.id === parseInt(e.target.value))
                             if (entry) loadMatchesForEntry(entry)
                         }}
-                        defaultValue=""
+                        value={selectedEntry?.id ?? ''}
                         className="w-full border border-gray-200 rounded-xl px-4 py-3 text-gray-900 outline-none focus:ring-2 focus:ring-green-600 bg-white"
                     >
                         <option value="" disabled>Elige un participante...</option>
