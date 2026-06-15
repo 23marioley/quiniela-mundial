@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { Suspense } from 'react'
 import { createClient } from '../lib/supabase'
 import NavMenu, { UserChip } from '../components/NavMenu'
 
@@ -62,7 +63,7 @@ function AvatarImage({ userId }: { userId: string }) {
     )
 }
 
-export default function GrupoPage() {
+function GrupoPageInner() {
     const router = useRouter()
     const supabase = createClient()
     const [entries, setEntries] = useState<Entry[]>([])
@@ -441,4 +442,12 @@ export default function GrupoPage() {
             </div>
         </main>
     )
+}
+
+export default function GrupoPage() {
+  return (
+    <Suspense>
+      <GrupoPageInner />
+    </Suspense>
+  )
 }
