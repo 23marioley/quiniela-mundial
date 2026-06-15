@@ -133,7 +133,6 @@ function GrupoPageInner() {
         home_team:teams!matches_home_team_id_fkey(id, name, flag),
         away_team:teams!matches_away_team_id_fkey(id, name, flag)
       `)
-            .eq('status', 'finished')
             .order('match_date', { ascending: true })
 
         if (!matchesData) { setLoadingMatches(false); return }
@@ -316,8 +315,8 @@ function GrupoPageInner() {
                 {selectedEntry && !loadingMatches && matches.length === 0 && (
                     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-10 text-center">
                         <p className="text-4xl mb-3">⏳</p>
-                        <p className="font-semibold text-gray-900">Aún no hay partidos terminados</p>
-                        <p className="text-gray-400 text-sm mt-1">Vuelve cuando haya resultados disponibles</p>
+                        <p className="font-semibold text-gray-900">Sin pronósticos capturados</p>
+                        <p className="text-gray-400 text-sm mt-1">Este participante aún no ha ingresado pronósticos</p>
                     </div>
                 )}
 
