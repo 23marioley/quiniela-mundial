@@ -15,6 +15,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Quiniela Mundial 2026",
   description: "Quiniela familiar del Mundial 2026",
+  icons: { icon: '/trionda.png' },
 };
 
 export default function RootLayout({
