@@ -244,7 +244,7 @@ const [lastMatchPoints, setLastMatchPoints] = useState<Record<number, { match_nu
             <div className="flex items-end justify-center gap-4">
 
               {/* 2do lugar */}
-              <div className="flex flex-col items-center gap-2 pb-2">
+              <div className="flex flex-col items-center gap-2">
                 <span className="text-3xl">🥈</span>
                 <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center border-2 border-gray-300">
                   {rankings[1].avatar_url ? (
@@ -258,8 +258,9 @@ const [lastMatchPoints, setLastMatchPoints] = useState<Record<number, { match_nu
                   <p className="text-xs text-gray-400">{rankings[1].entry_name}</p>
                   <p className="font-bold text-lg text-gray-700">{rankings[1].total_points} pts</p>
                 </div>
-                <div className="w-20 bg-gray-100 rounded-t-xl h-16 flex items-center justify-center">
-                  <span className="text-2xl font-bold text-gray-400">2</span>
+                <div className="w-20 rounded-t-xl h-16 flex items-center justify-center"
+                  style={{ background: 'linear-gradient(135deg, #8a9ba8, #c8d6df, #8a9ba8)' }}>
+                  <span className="text-2xl font-bold text-white" style={{ textShadow: '0 1px 2px rgba(0,0,0,0.4)' }}>2</span>
                 </div>
               </div>
 
@@ -276,16 +277,16 @@ const [lastMatchPoints, setLastMatchPoints] = useState<Record<number, { match_nu
                 <div className="text-center">
                   <p className="font-bold text-gray-900">{rankings[0].display_name}</p>
                   <p className="text-xs text-gray-400">{rankings[0].entry_name}</p>
-                  <p className="font-bold text-2xl" style={{ color: '#006847' }}>{rankings[0].total_points} pts</p>
+                  <p className="font-bold text-2xl" style={{ color: '#b8860b' }}>{rankings[0].total_points} pts</p>
                 </div>
                 <div className="w-20 rounded-t-xl h-24 flex items-center justify-center"
-                  style={{ backgroundColor: '#006847' }}>
-                  <span className="text-2xl font-bold text-white">1</span>
+                  style={{ background: 'linear-gradient(135deg, #b8860b, #ffd700, #b8860b)' }}>
+                  <span className="text-2xl font-bold text-white" style={{ textShadow: '0 1px 2px rgba(0,0,0,0.4)' }}>1</span>
                 </div>
               </div>
 
               {/* 3er lugar */}
-              <div className="flex flex-col items-center gap-2 pb-4">
+              <div className="flex flex-col items-center gap-2">
                 <span className="text-3xl">🥉</span>
                 <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center border-2 border-amber-600">
                   {rankings[2].avatar_url ? (
@@ -299,8 +300,9 @@ const [lastMatchPoints, setLastMatchPoints] = useState<Record<number, { match_nu
                   <p className="text-xs text-gray-400">{rankings[2].entry_name}</p>
                   <p className="font-bold text-lg text-gray-700">{rankings[2].total_points} pts</p>
                 </div>
-                <div className="w-20 bg-gray-100 rounded-t-xl h-10 flex items-center justify-center">
-                  <span className="text-2xl font-bold text-gray-400">3</span>
+                <div className="w-20 rounded-t-xl h-10 flex items-center justify-center"
+                  style={{ background: 'linear-gradient(135deg, #7c4a1e, #cd7f32, #7c4a1e)' }}>
+                  <span className="text-2xl font-bold text-white" style={{ textShadow: '0 1px 2px rgba(0,0,0,0.4)' }}>3</span>
                 </div>
               </div>
 
@@ -350,34 +352,41 @@ const [lastMatchPoints, setLastMatchPoints] = useState<Record<number, { match_nu
                     {/* Info */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <p className="font-semibold text-gray-900 truncate">{entry.display_name}</p>
+<p className="font-semibold text-gray-900 truncate text-sm md:text-base">{entry.display_name}</p>
                         {isMe && (
                           <span className="text-xs px-2 py-0.5 rounded-full text-white flex-shrink-0"
                             style={{ backgroundColor: '#006847' }}>tú</span>
                         )}
                       </div>
-                      <p className="text-xs text-gray-400">{entry.entry_name}</p>
+                      {/* <p className="text-xs text-gray-400">{entry.entry_name}</p> */}
                     </div>
 
                     {/* Stats */}
                     <div className="text-right flex items-center gap-2 justify-end">
-                      {entry.entry_id in lastMatchPoints && (
-                        <div className="flex items-center gap-1">
-                          {lastMatchPoints[entry.entry_id].map((m, i) => {
-                            const isLast = i === lastMatchPoints[entry.entry_id].length - 1
-                            return (
-                              <span key={m.match_number} className={`font-bold rounded-full ${
-                                m.points === 3 ? 'bg-green-100 text-green-700' :
-                                m.points === 1 ? 'bg-blue-100 text-blue-700' :
-                                'bg-gray-100 text-gray-400'
-                              } ${isLast ? 'text-xs px-2 py-1' : 'text-xs px-1.5 py-0.5'}`}
-                                style={isLast ? { fontSize: '0.7rem' } : { fontSize: '0.6rem' }}>
-                                +{m.points}
-                              </span>
-                            )
-                          })}
-                        </div>
-                      )}
+                      {entry.entry_id in lastMatchPoints && (() => {
+                        const todayPts = lastMatchPoints[entry.entry_id]
+                        const total = todayPts.reduce((s, m) => s + m.points, 0)
+                        return (
+                          <div className="flex flex-col items-end gap-1">
+                            <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                              total >= 3 ? 'bg-green-100 text-green-700' :
+                              total >= 1 ? 'bg-blue-100 text-blue-700' :
+                              'bg-gray-100 text-gray-400'
+                            }`}>
+                              +{total} Hoy
+                            </span>
+                            <div className="flex gap-0.5">
+                              {todayPts.map(m => (
+                                <div key={m.match_number} className={`w-2 h-2 rounded-full ${
+                                  m.points === 3 ? 'bg-green-500' :
+                                  m.points === 1 ? 'bg-blue-400' :
+                                  'bg-gray-300'
+                                }`} />
+                              ))}
+                            </div>
+                          </div>
+                        )
+                      })()}
                       <div>
                         <p className="font-bold text-lg text-gray-900">{entry.total_points} pts</p>
                         <p className="text-xs text-gray-400">
