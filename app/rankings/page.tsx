@@ -111,7 +111,7 @@ const [lastMatchPoints, setLastMatchPoints] = useState<Record<number, { match_nu
         .in('match_id', matchIds)
 
       // map: entry_id -> array de {match_number, points} en orden
-      const map: Record<number, { match_number: number; points: number }[]> = {}
+      const map: Record<number, { match_number: number; points: number; match_date: string }[]> = {}
       pts?.forEach((p: any) => {
         if (!map[p.entry_id]) map[p.entry_id] = []
         const match = todayMatches.find((m: any) => m.id === p.match_id)
