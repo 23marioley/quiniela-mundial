@@ -45,7 +45,7 @@ export default function RankingsPage() {
   const [loading, setLoading] = useState(true)
   const [histories, setHistories] = useState<EntryHistory[]>([])
   const [loadingHistory, setLoadingHistory] = useState(true)
-  const [lastMatchPoints, setLastMatchPoints] = useState<Record<number, number>>({})
+const [lastMatchPoints, setLastMatchPoints] = useState<Record<number, { match_number: number; points: number; match_date: string }[]>>({})
   const [selectedIds, setSelectedIds] = useState<number[]>([])
   const [xWindow, setXWindow] = useState({ start: 1, end: 10 })
   const [fullView, setFullView] = useState(true)
@@ -89,22 +89,35 @@ export default function RankingsPage() {
 
     await loadHistory()
 
-    const { data: lastMatch } = await supabase
-      .from('matches')
-      .select('id')
-      .eq('status', 'finished')
-      .order('match_number', { ascending: false })
-      .limit(1)
-      .single()
+    const now = new Date()
+    const todayStart = new Date(now)
+    todayStart.setUTCHours(6, 0, 0, 0)
+    if (now.getUTCHours() < 6) todayStart.setUTCDate(todayStart.getUTCDate() - 1)
+    const todayEnd = new Date(todayStart.getTime() + 24 * 60 * 60 * 1000)
 
-    if (lastMatch) {
+    const { data: todayMatches } = await supabase
+      .from('matches')
+      .select('id, match_number, match_date')
+      .eq('status', 'finished')
+      .gte('match_date', todayStart.toISOString())
+      .lt('match_date', todayEnd.toISOString())
+      .order('match_date', { ascending: true })
+
+    if (todayMatches && todayMatches.length > 0) {
+      const matchIds = todayMatches.map((m: any) => m.id)
       const { data: pts } = await supabase
         .from('predictions')
-        .select('entry_id, points_earned')
-        .eq('match_id', lastMatch.id)
+        .select('entry_id, match_id, points_earned')
+        .in('match_id', matchIds)
 
-      const map: Record<number, number> = {}
-      pts?.forEach((p: any) => { map[p.entry_id] = p.points_earned ?? 0 })
+      // map: entry_id -> array de {match_number, points} en orden
+      const map: Record<number, { match_number: number; points: number }[]> = {}
+      pts?.forEach((p: any) => {
+        if (!map[p.entry_id]) map[p.entry_id] = []
+        const match = todayMatches.find((m: any) => m.id === p.match_id)
+        map[p.entry_id].push({ match_number: match?.match_number ?? 0, points: p.points_earned ?? 0, match_date: match?.match_date ?? '' })
+      })
+      Object.values(map).forEach(arr => arr.sort((a: any, b: any) => a.match_date.localeCompare(b.match_date)))
       setLastMatchPoints(map)
     }
   }
@@ -349,12 +362,21 @@ export default function RankingsPage() {
                     {/* Stats */}
                     <div className="text-right flex items-center gap-2 justify-end">
                       {entry.entry_id in lastMatchPoints && (
-                        <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full ${lastMatchPoints[entry.entry_id] === 3 ? 'bg-green-100 text-green-700' :
-                            lastMatchPoints[entry.entry_id] === 1 ? 'bg-blue-100 text-blue-700' :
-                              'bg-gray-100 text-gray-400'
-                          }`}>
-                          +{lastMatchPoints[entry.entry_id]}
-                        </span>
+                        <div className="flex items-center gap-1">
+                          {lastMatchPoints[entry.entry_id].map((m, i) => {
+                            const isLast = i === lastMatchPoints[entry.entry_id].length - 1
+                            return (
+                              <span key={m.match_number} className={`font-bold rounded-full ${
+                                m.points === 3 ? 'bg-green-100 text-green-700' :
+                                m.points === 1 ? 'bg-blue-100 text-blue-700' :
+                                'bg-gray-100 text-gray-400'
+                              } ${isLast ? 'text-xs px-2 py-1' : 'text-xs px-1.5 py-0.5'}`}
+                                style={isLast ? { fontSize: '0.7rem' } : { fontSize: '0.6rem' }}>
+                                +{m.points}
+                              </span>
+                            )
+                          })}
+                        </div>
                       )}
                       <div>
                         <p className="font-bold text-lg text-gray-900">{entry.total_points} pts</p>
@@ -363,7 +385,6 @@ export default function RankingsPage() {
                         </p>
                       </div>
                     </div>
-
                   </div>
                 )
               })}
