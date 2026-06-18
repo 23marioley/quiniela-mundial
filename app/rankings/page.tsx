@@ -255,7 +255,7 @@ const [lastMatchPoints, setLastMatchPoints] = useState<Record<number, { match_nu
                 </div>
                 <div className="text-center">
                   <p className="font-semibold text-gray-900 text-sm">{rankings[1].display_name}</p>
-                  <p className="text-xs text-gray-400">{rankings[1].entry_name}</p>
+                  {/* <p className="text-xs text-gray-400">{rankings[1].entry_name}</p> */}
                   <p className="font-bold text-lg text-gray-700">{rankings[1].total_points} pts</p>
                 </div>
                 <div className="w-20 rounded-t-xl h-16 flex items-center justify-center"
@@ -276,7 +276,7 @@ const [lastMatchPoints, setLastMatchPoints] = useState<Record<number, { match_nu
                 </div>
                 <div className="text-center">
                   <p className="font-bold text-gray-900">{rankings[0].display_name}</p>
-                  <p className="text-xs text-gray-400">{rankings[0].entry_name}</p>
+                  {/* <p className="text-xs text-gray-400">{rankings[0].entry_name}</p> */}
                   <p className="font-bold text-2xl" style={{ color: '#b8860b' }}>{rankings[0].total_points} pts</p>
                 </div>
                 <div className="w-20 rounded-t-xl h-24 flex items-center justify-center"
@@ -297,7 +297,7 @@ const [lastMatchPoints, setLastMatchPoints] = useState<Record<number, { match_nu
                 </div>
                 <div className="text-center">
                   <p className="font-semibold text-gray-900 text-sm">{rankings[2].display_name}</p>
-                  <p className="text-xs text-gray-400">{rankings[2].entry_name}</p>
+                  {/* <p className="text-xs text-gray-400">{rankings[2].entry_name}</p> */}
                   <p className="font-bold text-lg text-gray-700">{rankings[2].total_points} pts</p>
                 </div>
                 <div className="w-20 rounded-t-xl h-10 flex items-center justify-center"

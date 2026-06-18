@@ -133,7 +133,7 @@ function GrupoPageInner() {
         home_team:teams!matches_home_team_id_fkey(id, name, flag),
         away_team:teams!matches_away_team_id_fkey(id, name, flag)
       `)
-            .order('match_date', { ascending: true })
+            .order('match_number', { ascending: true })
 
         if (!matchesData) { setLoadingMatches(false); return }
 

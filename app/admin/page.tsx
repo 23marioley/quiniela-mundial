@@ -96,7 +96,7 @@ const [generatingPDF, setGeneratingPDF] = useState(false)
         home_team:teams!matches_home_team_id_fkey(id, name, flag),
         away_team:teams!matches_away_team_id_fkey(id, name, flag)
       `)
-            .order('match_date', { ascending: true })
+            .order('match_number', { ascending: true })
 
         if (matchesData) {
             const formatted = matchesData.map((m: any) => ({
@@ -278,7 +278,7 @@ async function loadSessions(date: string) {
       home_team:teams!matches_home_team_id_fkey(id, name, flag),
       away_team:teams!matches_away_team_id_fkey(id, name, flag)
     `)
-            .order('match_date', { ascending: true })
+            .order('match_number', { ascending: true })
 
         // Cargar todas las quinielas
         const { data: entriesRaw } = await supabase
