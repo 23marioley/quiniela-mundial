@@ -67,7 +67,9 @@ export default function AdminPage() {
     const [loading, setLoading] = useState(true)
     const [isAdmin, setIsAdmin] = useState(false)
     const [users, setUsers] = useState<UserSummary[]>([])
-    const [activeTab, setActiveTab] = useState<'partidos' | 'usuarios' | 'pdf' | 'sesiones'>('partidos')
+const [activeTab, setActiveTab] = useState<'partidos' | 'usuarios' | 'pdf' | 'sesiones'>('partidos')
+    const SHOW_SESIONES_TAB = false // cambiar a true para reactivar
+    const SHOW_PDF_TAB = false // cambiar a true para reactivar
     const [loadingUsers, setLoadingUsers] = useState(false)
     const [totalRecaudado, setTotalRecaudado] = useState(0)
 const [generatingPDF, setGeneratingPDF] = useState(false)
@@ -471,6 +473,7 @@ async function loadSessions(date: string) {
                     >
                         👥 Usuarios
                     </button>
+                    {SHOW_SESIONES_TAB && (
                     <button
                         onClick={() => { setActiveTab('sesiones'); loadSessions(sessionDate) }}
                         className={`px-4 py-2.5 text-sm font-medium rounded-t-xl transition-colors ${activeTab === 'sesiones' ? 'text-white' : 'text-gray-500 hover:text-gray-900'}`}
@@ -478,6 +481,8 @@ async function loadSessions(date: string) {
                     >
                         👁️ Sesiones
                     </button>
+                    )}
+                    {SHOW_PDF_TAB && (
                     <button
                         onClick={() => setActiveTab('pdf')}
                         className={`px-4 py-2.5 text-sm font-medium rounded-t-xl transition-colors ${activeTab === 'pdf' ? 'text-white' : 'text-gray-500 hover:text-gray-900'
@@ -486,6 +491,7 @@ async function loadSessions(date: string) {
                     >
                         📄 Generar PDF
                     </button>
+                    )}
                 </div>
             </div>
             {activeTab === 'partidos' && (
