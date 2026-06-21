@@ -5,6 +5,7 @@ import { useRouter, usePathname } from 'next/navigation'
 import { createClient } from '../lib/supabase'
 import Link from 'next/link'
 const SESSION_TIMEOUT = 30 * 60 * 1000 // 30 minutos en ms
+const SHOW_PREMIOS_LINK = false // cambiar a true cuando quieras verlo en el menú
 
 export default function NavMenu() {
     const [open, setOpen] = useState(false)
@@ -77,7 +78,7 @@ export default function NavMenu() {
         { href: '/rankings', label: 'Rankings', icon: '🏆', disabled: false },
         // { href: '/grupo', label: 'Pronósticos del grupo', icon: '👁️', disabled: !grupoActivo },
         ...(isAdmin ? [{ href: '/admin', label: 'Panel Admin', icon: '⚙️', disabled: false }] : []),
-        ...(isAdmin ? [{ href: '/premios', label: 'Premios', icon: '🏆', disabled: false }] : []), // quitar isAdmin && cuando se publique
+        ...(SHOW_PREMIOS_LINK && isAdmin ? [{ href: '/premios', label: 'Premios', icon: '🏆', disabled: false }] : []),
         ]
 
     return (
