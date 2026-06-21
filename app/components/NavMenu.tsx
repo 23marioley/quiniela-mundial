@@ -77,6 +77,7 @@ export default function NavMenu() {
         { href: '/rankings', label: 'Rankings', icon: '🏆', disabled: false },
         // { href: '/grupo', label: 'Pronósticos del grupo', icon: '👁️', disabled: !grupoActivo },
         ...(isAdmin ? [{ href: '/admin', label: 'Panel Admin', icon: '⚙️', disabled: false }] : []),
+        ...(isAdmin ? [{ href: '/premios', label: 'Premios', icon: '🏆', disabled: false }] : []), // quitar isAdmin && cuando se publique
         ]
 
     return (
