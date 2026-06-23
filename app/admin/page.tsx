@@ -70,7 +70,7 @@ export default function AdminPage() {
     const [isAdmin, setIsAdmin] = useState(false)
     const [users, setUsers] = useState<UserSummary[]>([])
 const [activeTab, setActiveTab] = useState<'partidos' | 'usuarios' | 'pdf' | 'sesiones'>('partidos')
-    const SHOW_SESIONES_TAB = false // cambiar a true para reactivar
+    const SHOW_SESIONES_TAB = true // cambiar a true para reactivar
     const SHOW_PDF_TAB = false // cambiar a true para reactivar
     const [loadingUsers, setLoadingUsers] = useState(false)
     const [totalRecaudado, setTotalRecaudado] = useState(0)
@@ -127,8 +127,12 @@ const [generatingPDF, setGeneratingPDF] = useState(false)
 
 async function loadSessions(date: string) {
         setLoadingSessions(true)
-        const from = `${date}T00:00:00.000Z`
-        const to = `${date}T23:59:59.999Z`
+        // Monterrey = UTC-6, entonces el día local empieza a las 06:00 UTC
+        const from = `${date}T06:00:00.000Z`
+        // El fin del día MTY es el día siguiente a las 05:59:59 UTC
+        const [y, m, d] = date.split('-').map(Number)
+        const nextDay = new Date(Date.UTC(y, m - 1, d + 1))
+        const to = `${nextDay.toISOString().split('T')[0]}T05:59:59.999Z`
 
         const { data } = await supabase
             .from('login_sessions')

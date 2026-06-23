@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { createClient } from '../lib/supabase'
 import Link from 'next/link'
+import LiveDrawer from './LiveDrawer'
 const SESSION_TIMEOUT = 30 * 60 * 1000 // 30 minutos en ms
 const SHOW_PREMIOS_LINK = false // cambiar a true cuando quieras verlo en el menú
 
@@ -97,6 +98,7 @@ export default function NavMenu() {
                 <div className="fixed inset-0 bg-black/40 z-40" onClick={() => setOpen(false)} />
             )}
 
+            <LiveDrawer />
             <div className={`fixed top-0 left-0 h-full w-72 bg-white shadow-xl z-50 transform transition-transform duration-300 ${open ? 'translate-x-0' : '-translate-x-full'
                 }`}>
                 <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between"

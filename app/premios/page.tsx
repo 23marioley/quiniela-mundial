@@ -17,6 +17,9 @@ type Award = {
     subtitle?: string
     name?: string
     avatar?: string | null
+    type?: 'default' | 'intro' | 'wamessage'
+    waMessage?: string
+    waImage?: string
 }
 
 export default function PremiosPage() {
@@ -69,7 +72,9 @@ export default function PremiosPage() {
 
         const { data: matchesData } = await supabase
             .from('matches')
-            .select('id, match_number, home_score, away_score')
+            .select(`id, match_number, home_score, away_score,
+                home_team:teams!matches_home_team_id_fkey(name, flag),
+                away_team:teams!matches_away_team_id_fkey(name, flag)`)
             .eq('status', 'finished')
             .order('match_number', { ascending: true })
 
@@ -102,6 +107,134 @@ export default function PremiosPage() {
 
         const list: Award[] = []
 
+        // Intro
+        list.push({
+            id: 'intro', emoji: '🏁', type: 'intro',
+            title: 'El torneo ha terminado',
+            subtitle: 'Pero antes de los premios, vamos con algunas frases memorables...',
+        })
+
+        // Mensajes de WhatsApp (hardcodeados — edita aquí)
+        const waMessages: { id: string; username: string; message?: string; image?: string }[] = [
+            {
+                id: 'wa_nopal',
+                username: 'nopal',
+                message: 'No se me achicopalen que todavía faltan 71 partidos 😅'
+            },
+            {
+                id: 'wa_aglae',
+                username: 'Aglae',
+                message: 'Los últimos serán los primeros 🤣😢'
+            },
+            {
+                id: 'wa_nopal2',
+                username: 'nopal',
+                message: 'The game is not over until it is.'
+            },
+            {
+                id: 'wa_elena',
+                username: 'elena_ley',
+                message: 'Pasu mecha marimar!!!! Que siga sumando!!! 😅'
+            },
+            {
+                id: 'wa_alex1',
+                username: 'AlexVega7',
+                message: 'Así que esto se siente ganar 3 puntos?'
+            },
+            {
+                id: 'wa_kalin2',
+                username: 'Kalin10',
+                message: 'A poco así de fresco se siente estar aqui cerquita de la Cima?'
+            },
+            {
+                id: 'wa_jenny2',
+                username: 'Jennifer_Ley',
+                message: 'Ya que se acabe la humillación jajaja, digo el mundial 😂'
+            },
+            {
+                id: 'wa_danny',
+                username: 'dannielaley',
+                message: 'Vamos Cabo Verde!'
+            },
+            {
+                id: 'wa_brandon',
+                username: 'BrandonLey17',
+                message: 'Danny ya me alcanzo en puntos\nme retiro'
+            },
+            {
+                id: 'wa_patty',
+                username: 'PATTY',
+                message: 'Soy medio bruja'
+            },
+            {
+                id: 'wa_pedro',
+                username: 'Pedroley',
+                message: 'Cacheton pero contento. Viva México Ajua.'
+            },
+            {
+                id: 'wa_kalin',
+                username: 'Kalin10',
+                message: 'Ya terminalo arbitro ingrato!!!!!!'
+            },
+            {
+                id: 'wa_alex',
+                username: 'AlexVega7',
+                message: 'Hasta que pierda Alex fue lo que leí ahi en el letrero de la FIFA'
+            },
+            {
+                id: 'wa_mario',
+                username: 'MARIO_LEY_D',
+                message: 'Císcale, císcale, diablo panzón 🤣'
+            },
+            {
+                id: 'wa_jenny',
+                username: 'Jennifer_Ley',
+                message: 'Y esta rosa?'
+            },
+             {
+                id: 'wa_fatima',
+                username: 'FaKatherine',
+                message: 'Ya voy a tener Fe como Jeny y saldré de ese último lugar 😎\nAlgún día 🤪'
+            },
+            {
+                id: 'wa_danny2',
+                username: 'dannielaley',
+                message: 'Ya me brincó Jenny\nMe retiro'
+            }, 
+            {
+                id: 'wa_pepinillo',
+                username: 'Pepinillo_Quiroz',
+                image: '/sticker-bb.jpeg'
+            },  
+        ]
+
+        // Buscar avatares de los usuarios de WA
+        const waUsernames = waMessages.map(m => m.username)
+        const { data: waProfiles } = await supabase
+            .from('profiles')
+            .select('display_name, username, avatar_url')
+            .or(waUsernames.map(u => `username.ilike.${u},display_name.ilike.${u}`).join(','))
+
+        const waAvatarMap: Record<string, string | null> = {}
+        waProfiles?.forEach((p: any) => {
+            waAvatarMap[p.username?.toLowerCase()] = p.avatar_url
+            waAvatarMap[p.display_name?.toLowerCase()] = p.avatar_url
+        })
+
+        waMessages.forEach(m => {
+            const avatar = waAvatarMap[m.username.toLowerCase()] ?? null
+            list.push({
+                id: `wa_${m.id}`,
+                type: 'wamessage',
+                emoji: '💬',
+                title: m.username,
+                waMessage: m.message,
+                waImage: m.image,
+                name: m.username,
+                avatar,
+            })
+        })
+
         // 1. Resultado más loco que sí se cumplió
         let loco: any = null
         predictions.filter((p: any) => p.points_earned === 3).forEach((p: any) => {
@@ -110,14 +243,14 @@ export default function PremiosPage() {
             const total = m.home_score + m.away_score
             const diff = Math.abs(m.home_score - m.away_score)
             if (!loco || total > loco.total || (total === loco.total && diff > loco.diff)) {
-                loco = { entry_id: p.entry_id, total, diff, home: m.home_score, away: m.away_score, match_number: m.match_number }
+                loco = { entry_id: p.entry_id, total, diff, home: m.home_score, away: m.away_score, match_number: m.match_number, home_team: m.home_team, away_team: m.away_team }
             }
         })
         if (loco) {
             const r = rankingByEntry[loco.entry_id]
             list.push({
-                id: 'loco', emoji: '🔮', title: 'Me llamaron loco',
-                subtitle: `Le atinó exacto al ${loco.home}-${loco.away}`,
+                id: 'loco', emoji: '🔮', title: '"Me llamaron loco"',
+                subtitle: `Le atinó exacto al ${loco.home}-${loco.away} en el ${loco.home_team.name} vs ${loco.away_team.name}, un resultado muy difícil de pronosticar`,
                 name: r?.display_name, avatar: r?.avatar_url,
             })
         }
@@ -158,23 +291,23 @@ export default function PremiosPage() {
             })
         }
 
-        // 4. Más marcadores exactos
-        const topExact = [...rankings].sort((a, b) => b.exact_scores - a.exact_scores)[0]
-        if (topExact) {
-            list.push({
-                id: 'exactos', emoji: '🎯', title: 'Más Marcadores Exactos',
-                subtitle: `Fuiste el participante con más marcadores exactos atinados con: ${topExact.exact_scores}`,
-                name: topExact.display_name, avatar: topExact.avatar_url,
-            })
-        }
-
-        // 5. Más resultados correctos
+        // 4. Más resultados correctos
         const topCorrect = [...rankings].sort((a, b) => b.correct_results - a.correct_results)[0]
         if (topCorrect) {
             list.push({
                 id: 'correctos', emoji: '✅', title: 'Más Resultados Correctos',
                 subtitle: `Fuiste el participante con más resultados correctos atinados con: ${topCorrect.correct_results}`,
                 name: topCorrect.display_name, avatar: topCorrect.avatar_url,
+            })
+        }
+
+        // 5. Más marcadores exactos
+        const topExact = [...rankings].sort((a, b) => b.exact_scores - a.exact_scores)[0]
+        if (topExact) {
+            list.push({
+                id: 'exactos', emoji: '🎯', title: 'Más Marcadores Exactos',
+                subtitle: `Fuiste el participante con más marcadores exactos atinados con: ${topExact.exact_scores}`,
+                name: topExact.display_name, avatar: topExact.avatar_url,
             })
         }
 
@@ -216,8 +349,8 @@ export default function PremiosPage() {
         if (racha && racha.streak > 0) {
             const r = rankingByEntry[racha.entry_id]
             list.push({
-                id: 'racha', emoji: '🔥', title: 'Racha Caliente',
-                subtitle: `La racha más larga sumando puntos, con: ${racha.streak} partidos seguidos`,
+                id: 'racha', emoji: '🔥', title: 'En Llamas',
+                subtitle: `La racha más larga sumando 1 o 3 puntos: ${racha.streak} partidos consecutivos`,
                 name: r?.display_name, avatar: r?.avatar_url,
             })
         }
@@ -231,8 +364,8 @@ export default function PremiosPage() {
         if (vidente && vidente.streak > 0) {
             const r = rankingByEntry[vidente.entry_id]
             list.push({
-                id: 'vidente', emoji: '🧙', title: 'El Vidente',
-                subtitle: `La racha más larga sumando 3 puntos, con: ${vidente.streak} partidos seguidos`,
+                id: 'vidente', emoji: '🧙', title: 'Vidente',
+                subtitle: `La racha más larga sumando 3 puntos: ${vidente.streak} partidos consecutivos`,
                 name: r?.display_name, avatar: r?.avatar_url,
             })
         }
@@ -249,21 +382,21 @@ export default function PremiosPage() {
         if (constancia) {
             const r = rankingByEntry[constancia.entry_id]
             list.push({
-                id: 'constancia', emoji: '👑', title: 'El Líder',
+                id: 'constancia', emoji: '👑', title: 'Líder',
                 subtitle: `Mayor cantidad de partidos en primer lugar, con: ${constancia.count}`,
                 name: r?.display_name, avatar: r?.avatar_url,
             })
         }
 
         // 10. Suspenso
-        list.push({ id: 'suspenso', emoji: '🥁', title: 'Y por último, nuestro GANADOR...' })
+        list.push({ id: 'suspenso', emoji: '🥁', title: '🏆\nY por último\nnuestro CAMPEÓN...' })
 
         // 11. Ganador
         const winner = rankings.find((r: any) => r.position === 1)
         if (winner) {
             list.push({
-                id: 'ganador', emoji: '🏆', title: '🏆🏆 GANADOR 🏆🏆',
-                subtitle: `Has ganado la Quiniela del Mundial 2026 — Familia Ley. Tu premio es de: $${prize} — ¡Empieza a cobrar!`,
+                id: 'ganador', emoji: '🏆', title: '🏆👑 CAMPEÓN 👑🏆',
+                subtitle: `Felicidades!\nHas ganado la Quiniela del Mundial 2026.\nTu premio es de: $${prize} — ¡Empieza a cobrar!`,
                 name: winner.display_name, avatar: winner.avatar_url,
             })
         }
@@ -300,20 +433,49 @@ export default function PremiosPage() {
                     className={`max-w-sm w-full bg-white rounded-3xl shadow-2xl p-8 text-center transition-all duration-700 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${visible ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-75 translate-y-4'
                         }`}
                 >
-                    <h2 className="text-2xl font-extrabold mb-5" style={{ color: '#b8860b' }}>{award.title}</h2>
-
-                    {award.name && (
-                        <div className="w-32 h-32 overflow-hidden bg-gray-100 mx-auto mb-4 rounded-3xl flex items-center justify-center">
-                            {award.avatar ? (
-                                <img src={award.avatar} className="w-full h-full object-cover" />
-                            ) : (
-                                <span className="text-5xl">👤</span>
-                            )}
+                    {award.type === 'wamessage' ? (
+                        <div className="flex flex-col items-center gap-4">
+                            {/* Bubble */}
+                            <div className="relative rounded-2xl rounded-tl-none px-5 py-4 text-left w-full"
+                                style={{ backgroundColor: '#d9fdd3'}}>
+                                <p className="text-sm font-bold text-[#075e54] mb-1">{award.name}</p>
+                                {award.waImage
+                                    ? <img src={award.waImage} className="rounded-xl max-w-full" />
+                                    : <p className="text-gray-800 text-base leading-snug">{award.waMessage}</p>
+                                }
+                                <div className="absolute -top-2 left-0 w-0 h-0"
+                                    style={{ borderRight: '10px solid #6abf69', borderTop: '10px solid transparent' }} />
+                                <div className="absolute -top-1.5 left-0.5 w-0 h-0"
+                                    style={{ borderRight: '9px solid #d9fdd3', borderTop: '9px solid transparent' }} />
+                            </div>
+                            {/* Avatar */}
+                            <div className="w-24 h-24 overflow-hidden bg-gray-100 rounded-3xl flex items-center justify-center">
+                                {award.avatar ? (
+                                    <img src={award.avatar} className="w-full h-full object-cover" />
+                                ) : (
+                                    <span className="text-4xl">👤</span>
+                                )}
+                            </div>
+                            <p className="font-bold text-lg" style={{ color: '#006847' }}>{award.name}</p>
                         </div>
-                    )}
+                    ) : (
+                        <>
+                            <h2 className="text-2xl font-extrabold mb-5" style={{ color: '#b8860b' }}>{award.title}</h2>
 
-                    {award.name && <p className="font-bold text-xl mb-1" style={{ color: '#006847' }}>{award.name}</p>}
-                    {award.subtitle && <p className="text-gray-600 text-sm">{award.subtitle}</p>}
+                            {award.name && (
+                                <div className="w-32 h-32 overflow-hidden bg-gray-100 mx-auto mb-4 rounded-3xl flex items-center justify-center">
+                                    {award.avatar ? (
+                                        <img src={award.avatar} className="w-full h-full object-cover" />
+                                    ) : (
+                                        <span className="text-5xl">👤</span>
+                                    )}
+                                </div>
+                            )}
+
+                            {award.name && <p className="font-bold text-xl mb-1" style={{ color: '#006847' }}>{award.name}</p>}
+                            {award.subtitle && <p className="text-gray-600 text-sm whitespace-pre-line">{award.subtitle}</p>}
+                        </>
+                    )}
                 </div>
             </div>
 
