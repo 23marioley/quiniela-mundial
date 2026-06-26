@@ -433,7 +433,7 @@ export default function PremiosPage() {
     const isLast = step === awards.length - 1
 
     return (
-<main className={`min-h-screen flex flex-col ${poppins.className}`} style={{ background: 'linear-gradient(135deg, #006847, #ffffff, #dc2626, #1e3a8a)' }}>            <header className="px-4 py-4 flex items-center justify-between">
+<main className={`h-dvh flex flex-col ${poppins.className}`} style={{ background: 'linear-gradient(135deg, #006847, #ffffff, #dc2626, #1e3a8a)' }}>            <header className="px-4 py-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                     <NavMenu />
                     <p className="font-bold text-white">🏆 Premios Quiniela 2026</p>
