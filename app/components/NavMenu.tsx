@@ -6,7 +6,7 @@ import { createClient } from '../lib/supabase'
 import Link from 'next/link'
 import LiveDrawer from './LiveDrawer'
 const SESSION_TIMEOUT = 30 * 60 * 1000 // 30 minutos en ms
-const SHOW_PREMIOS_LINK = false // cambiar a true cuando quieras verlo en el menú
+const SHOW_PREMIOS_LINK = true // cambiar a true cuando quieras verlo en el menú
 
 export default function NavMenu() {
     const [open, setOpen] = useState(false)
@@ -76,7 +76,7 @@ export default function NavMenu() {
     const links = [
         { href: '/mis-quinielas', label: 'Mis Quinielas', icon: '🏠', disabled: false },
         { href: '/grupos', label: 'Grupos', icon: '🌍', disabled: false },
-        { href: '/rankings', label: 'Rankings', icon: '🏆', disabled: false },
+        { href: '/rankings', label: 'Rankings', icon: '📊', disabled: false },
         // { href: '/grupo', label: 'Pronósticos del grupo', icon: '👁️', disabled: !grupoActivo },
         ...(isAdmin ? [{ href: '/admin', label: 'Panel Admin', icon: '⚙️', disabled: false }] : []),
         ...(SHOW_PREMIOS_LINK && isAdmin ? [{ href: '/premios', label: 'Premios', icon: '🏆', disabled: false }] : []),
