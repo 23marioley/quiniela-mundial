@@ -131,17 +131,12 @@ export default function PremiosPage() {
                 message: 'Los últimos serán los primeros 🤣😢'
             },
             {
-                id: 'wa_nopal2',
-                username: 'nopal',
-                message: 'The game is not over until it is.'
-            },
-            {
                 id: 'wa_elena',
                 username: 'elena_ley',
                 message: 'Pasu mecha marimar!!!! Que siga sumando!!! 😅'
             },
             {
-                id: 'wa_alex1',
+                id: 'wa_alex',
                 username: 'AlexVega7',
                 message: 'Así que esto se siente ganar 3 puntos?'
             },
@@ -166,6 +161,11 @@ export default function PremiosPage() {
                 message: 'Danny ya me alcanzo en puntos\nme retiro'
             },
             {
+                id: 'wa_danny2',
+                username: 'dannielaley',
+                message: 'Ya me brincó Jenny\nMe retiro'
+            }, 
+            {
                 id: 'wa_patty',
                 username: 'PATTY',
                 message: 'Soy medio bruja'
@@ -186,6 +186,11 @@ export default function PremiosPage() {
                 message: 'Hasta que pierda Alex fue lo que leí ahi en el letrero de la FIFA'
             },
             {
+                id: 'wa_nopal2',
+                username: 'nopal',
+                message: 'The game is not over until it is.'
+            },
+            {
                 id: 'wa_mario',
                 username: 'MARIO_LEY_D',
                 message: 'Císcale, císcale, diablo panzón 🤣'
@@ -195,16 +200,12 @@ export default function PremiosPage() {
                 username: 'Jennifer_Ley',
                 message: 'Y esta rosa?'
             },
-             {
-                id: 'wa_fatima',
-                username: 'FaKatherine',
-                message: 'Ya voy a tener Fe como Jeny y saldré de ese último lugar 😎\nAlgún día 🤪'
-            },
-            {
-                id: 'wa_danny2',
-                username: 'dannielaley',
-                message: 'Ya me brincó Jenny\nMe retiro'
-            }, 
+            //  {
+            //     id: 'wa_fatima',
+            //     username: 'FaKatherine',
+            //     message: 'Ya voy a tener Fe como Jeny y saldré de ese último lugar 😎\nAlgún día 🤪'
+            // },
+            
             {
                 id: 'wa_pepinillo',
                 username: 'Pepinillo_Quiroz',
@@ -416,7 +417,7 @@ export default function PremiosPage() {
         }
 
         // 12. Cierre
-        list.push({ id: 'cierre', emoji: '👋', title: 'Nos vemos en el 2030!!!' })
+        list.push({ id: 'cierre', emoji: '👋', title: 'Gracias por participar!!!\nNos vemos en el 2030!!!\n🇪🇸 🇵🇹 🇲🇦' })
 
         setAwards(list)
         setLoading(false)
@@ -484,7 +485,7 @@ export default function PremiosPage() {
                         </div>
                     ) : (
                         <>
-                            <h2 className="text-2xl font-extrabold mb-5 whitespace-pre-line" style={{ color: '#b8860b' }}>{award.title}</h2>
+                            <h2 className="text-2xl font-extrabold whitespace-pre-line" style={{ color: '#b8860b' }}>{award.title}</h2>
 
                             {award.name && (
                                 <div className="w-32 h-32 overflow-hidden bg-gray-100 mx-auto mb-4 rounded-3xl flex items-center justify-center">
