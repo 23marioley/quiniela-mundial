@@ -307,7 +307,7 @@ export default function PremiosPage() {
             const r = rankingByEntry[worstFall.entry_id]
             list.push({
                 id: 'caida', emoji: '📉', title: '📉 La Anti Remontada 📉',
-                subtitle: `En tu mejor momento estuviste en el #${worstFall.best} y terminaste en el #${worstFall.end} — caíste ${worstFall.delta} posiciones\nConfiábamos en ti 😢`,
+                subtitle: `En tu mejor momento estuviste en el #${worstFall.best} y terminaste en el #${worstFall.end} — caíste ${worstFall.delta} posiciones\nLa campeona vigente tuvo que ceder el trono 😢`,
                 name: r?.display_name, avatar: r?.avatar_url,
             })
         }
@@ -428,7 +428,16 @@ export default function PremiosPage() {
         }
 
         // 12. Cierre
-        list.push({ id: 'cierre', emoji: '👋', title: 'Gracias por participar!!!\nNos vemos en el 2030!!!\n🇪🇸 🇵🇹 🇲🇦' })
+        list.push({
+            id: 'gracias',
+            emoji: '👋',
+            title: 'Gracias por participar!',
+            winners: [
+                ...rankings.filter((r: any) => r.display_name !== 'marioleyt'),
+                ...rankings.filter((r: any) => r.display_name === 'marioleyt'),
+            ].map((r: any) => ({ display_name: r.display_name, avatar_url: r.avatar_url })),
+        })
+        list.push({ id: 'cierre', emoji: '👋', title: 'Nos vemos en el 2030!!!\n🇪🇸 🇵🇹 🇲🇦' })
 
         setAwards(list)
         setLoading(false)
@@ -496,7 +505,7 @@ export default function PremiosPage() {
                         </div>
                     ) : (
                         <>
-                            <h2 className="text-2xl font-extrabold whitespace-pre-line" style={{ color: '#b8860b' }}>{award.title}</h2>
+                            <h2 className="text-2xl font-extrabold whitespace-pre-line mb-2" style={{ color: '#b8860b' }}>{award.title}</h2>
 
                             {award.name && (
                                 <div className="w-32 h-32 overflow-hidden bg-gray-100 mx-auto mb-4 rounded-3xl flex items-center justify-center">
