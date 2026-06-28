@@ -23,6 +23,7 @@ type Award = {
     waMessage?: string
     waImage?: string
     prize?: number
+    winners?: { display_name: string; avatar_url?: string }[]
 }
 
 export default function PremiosPage() {
@@ -72,7 +73,13 @@ export default function PremiosPage() {
         const { data: profile } = await supabase
             .from('profiles').select('is_admin').eq('id', user.id).single()
 
-        if (!profile?.is_admin && !PUBLICO) { router.push('/mis-quinielas'); return }
+        const { count: upcoming } = await supabase
+            .from('matches')
+            .select('id', { count: 'exact', head: true })
+            .eq('status', 'upcoming')
+        const torneoTerminado = upcoming === 0
+
+        if (!profile?.is_admin && !PUBLICO && !torneoTerminado) { router.push('/mis-quinielas'); return }
 
         const { data: matchesData } = await supabase
             .from('matches')
@@ -376,11 +383,15 @@ export default function PremiosPage() {
             if (!vidente || streak > vidente.streak) vidente = { entry_id: Number(entryId), streak }
         })
         if (vidente && vidente.streak > 0) {
-            const r = rankingByEntry[vidente.entry_id]
+            // Buscar todos los que tienen la misma racha máxima
+            const videnteGanadores = Object.entries(predsByEntry)
+                .filter(([, arr]) => longestStreak(arr, p => p === 3) === vidente.streak)
+                .map(([entryId]) => rankingByEntry[Number(entryId)])
+                .filter(Boolean)
             list.push({
-                id: 'vidente', emoji: '🧙', title: '⚡ Imparable ⚡',
-                subtitle: `Tuviste la racha más larga de partidos sumando 3 puntos: ${vidente.streak} partidos consecutivos\nDibuje maestro!`,
-                name: r?.display_name, avatar: r?.avatar_url,
+                id: 'vidente', emoji: '⚡', title: '⚡ Imparable ⚡',
+                subtitle: `Tuviste la racha más larga de partidos sumando 3 puntos: ${vidente.streak} partidos consecutivos`,
+                winners: videnteGanadores,
             })
         }
 
@@ -497,7 +508,21 @@ export default function PremiosPage() {
                                 </div>
                             )}
 
-                            {award.name && <p className="font-bold text-xl mb-1" style={{ color: '#006847' }}>{award.name}</p>}
+                            {award.winners && award.winners.length > 0 && (
+                                <div className="flex flex-wrap justify-center gap-3 mb-3">
+                                    {award.winners.map((w, i) => (
+                                        <div key={i} className="flex flex-col items-center gap-1">
+                                            <div className="w-14 h-14 rounded-2xl overflow-hidden bg-gray-100 flex items-center justify-center">
+                                                {w.avatar_url
+                                                    ? <img src={w.avatar_url} className="w-full h-full object-cover" />
+                                                    : <span className="text-2xl">👤</span>}
+                                            </div>
+                                            <p className="text-xs font-semibold text-gray-700">{w.display_name}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                            {!award.winners && award.name && <p className="font-bold text-xl mb-1" style={{ color: '#006847' }}>{award.name}</p>}
                             {award.prize && (
                                 <>
                                     <p className="font-extrabold text-lg mt-2" style={{ color: '#b8860b' }}>¡Felicidades!</p>

@@ -11,6 +11,7 @@ const SHOW_PREMIOS_LINK = true // cambiar a true cuando quieras verlo en el men�
 export default function NavMenu() {
     const [open, setOpen] = useState(false)
     const [isAdmin, setIsAdmin] = useState(false)
+    const [torneoTerminado, setTorneoTerminado] = useState(false)
     const router = useRouter()
     const pathname = usePathname()
     const supabase = createClient()
@@ -26,6 +27,12 @@ export default function NavMenu() {
                 .eq('id', user.id)
                 .single()
             if (profile?.is_admin) setIsAdmin(true)
+
+            const { count } = await supabase
+                .from('matches')
+                .select('id', { count: 'exact', head: true })
+                .eq('status', 'upcoming')
+            if (count === 0) setTorneoTerminado(true)
         }
         checkAdmin()
     }, [])
@@ -79,7 +86,7 @@ export default function NavMenu() {
         { href: '/rankings', label: 'Rankings', icon: '📊', disabled: false },
         // { href: '/grupo', label: 'Pronósticos del grupo', icon: '👁️', disabled: !grupoActivo },
         ...(isAdmin ? [{ href: '/admin', label: 'Panel Admin', icon: '⚙️', disabled: false }] : []),
-        ...(SHOW_PREMIOS_LINK && isAdmin ? [{ href: '/premios', label: 'Premios', icon: '🏆', disabled: false }] : []),
+        ...((SHOW_PREMIOS_LINK || torneoTerminado) && (isAdmin || torneoTerminado) ? [{ href: '/premios', label: 'Premios', icon: '🏆', disabled: false }] : []),
         ]
 
     return (
